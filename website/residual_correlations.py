@@ -109,7 +109,6 @@ for main_category in MAIN_CATEGORIES:
                 categories.remove("all")
                 return categories
             else:
-                print(categories)
                 raise PreventUpdate
 
 
