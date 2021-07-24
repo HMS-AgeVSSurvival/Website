@@ -3,11 +3,12 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
+from dash.exceptions import PreventUpdate
 
 import os
 import pandas as pd
 
-from website.utils.controls import get_item_radio_items, get_drop_down, get_options_from_dict
+from website.utils.controls import get_item_radio_items, get_check_list, get_drop_down, get_options_from_dict
 from website import METHODS, TARGETS, MAIN_CATEGORIES, CATEGORIES, ALGORITHMS
 
 
@@ -71,33 +72,45 @@ def get_controls_residual_correlations():
 def get_controls_axis_residual_correlations(axis):
     return [
         get_item_radio_items(f"target_{axis}_residual_correlations", TARGETS, "Target:"),
-        get_item_radio_items(f"main_category_{axis}_residual_correlations", MAIN_CATEGORIES, "Main category:"),
-        get_drop_down(f"category_{axis}_residual_correlations", CATEGORIES["examination"], "Category:"),
-        get_item_radio_items(f"algorithm_{axis}_residual_correlations", ALGORITHMS, "Algorithm:"),
+        get_drop_down(
+            f"examination_category_{axis}_residual_correlations",
+            CATEGORIES["examination"],
+            "Examination category:",
+            multi=True,
+            clearable=True,
+        ),
+        get_drop_down(
+            f"laboratory_category_{axis}_residual_correlations",
+            CATEGORIES["laboratory"],
+            "Laboratory category:",
+            multi=True,
+            clearable=True,
+        ),
+        get_drop_down(
+            f"questionnaire_category_{axis}_residual_correlations",
+            CATEGORIES["questionnaire"],
+            "Questionnaire category:",
+            multi=True,
+            clearable=True,
+        ),
+        get_check_list(f"algorithm_{axis}_residual_correlations", ALGORITHMS, "Algorithm:"),
     ]
 
 
-@APP.callback(
-    [Output("category_row_residual_correlations", "options"), Output("category_row_residual_correlations", "value")],
-    Input("main_category_row_residual_correlations", "value"),
-)
-def update_categories_row(main_category):
-    options = get_options_from_dict(CATEGORIES[main_category])
+for main_category in MAIN_CATEGORIES:
+    for axis in ["row", "column"]:
 
-    return options, options[0]["value"]
-
-
-@APP.callback(
-    [
-        Output("category_column_residual_correlations", "options"),
-        Output("category_column_residual_correlations", "value"),
-    ],
-    Input("main_category_column_residual_correlations", "value"),
-)
-def update_categories_column(main_category):
-    options = get_options_from_dict(CATEGORIES[main_category])
-
-    return options, options[0]["value"]
+        @APP.callback(
+            Output(f"{main_category}_category_{axis}_residual_correlations", "value"),
+            Input(f"{main_category}_category_{axis}_residual_correlations", "value"),
+        )
+        def update_categories_row(categories):
+            if "all" in categories and len(categories) > 1:
+                categories.remove("all")
+                return categories
+            else:
+                print(categories)
+                raise PreventUpdate
 
 
 LAYOUT = dbc.Container(

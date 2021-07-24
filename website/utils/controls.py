@@ -32,12 +32,11 @@ def get_item_radio_items(id, items, legend, from_dict=True, value_idx=0):
                 value=options[value_idx]["value"],
                 labelStyle={"display": "inline-block", "margin": "5px"},
             ),
-            html.Br(),
         ]
     )
 
 
-def get_drop_down(id, items, legend, from_dict=True, value=None):
+def get_drop_down(id, items, legend, from_dict=True, value=None, multi=False, clearable=False):
     if from_dict:
         options = get_options_from_dict(items)
     else:
@@ -46,11 +45,20 @@ def get_drop_down(id, items, legend, from_dict=True, value=None):
     if value is None:
         value = options[0]["value"]
 
+    if multi and type(value) != list:
+        value = [value]
+
     return dbc.FormGroup(
         [
             html.P(legend),
-            dcc.Dropdown(id=id, options=options, value=value, clearable=False),
-            html.Br(),
+            dcc.Dropdown(
+                id=id,
+                options=options,
+                value=value,
+                clearable=clearable,
+                multi=multi,
+                placeholder="Nothing is selected.",
+            ),
         ]
     )
 
@@ -68,6 +76,5 @@ def get_check_list(id, items, legend, from_dict=True, value=None):
         [
             html.P(legend),
             dcc.Checklist(id=id, options=options, value=[value], labelStyle={"display": "inline-block"}),
-            html.Br(),
         ]
     )
