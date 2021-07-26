@@ -7,9 +7,21 @@ from dash.exceptions import PreventUpdate
 
 import os
 import pandas as pd
+import numpy as np
 
-from website.utils.controls import get_item_radio_items, get_check_list, get_drop_down, get_options_from_dict
-from website import METHODS, TARGETS, MAIN_CATEGORIES, CATEGORIES, ALGORITHMS, AXES
+from website.utils.controls import get_item_radio_items, get_check_list, get_drop_down
+from website import (
+    METHODS,
+    TARGETS,
+    MAIN_CATEGORIES,
+    CATEGORIES,
+    ALGORITHMS,
+    AXES,
+    AXIS_ROW,
+    AXIS_COLUMN,
+    GRAPH_SIZE,
+    DOWNLOAD_CONFIG,
+)
 
 
 @APP.callback(
@@ -73,7 +85,7 @@ def get_controls_axis_residual_correlations(key_axis):
             )
             for main_category in MAIN_CATEGORIES
         ]
-        + [get_check_list(f"algorithm_{axis}_residual_correlations", ALGORITHMS, "Algorithm:")]
+        + [get_check_list(f"algorithm_{key_axis}_residual_correlations", ALGORITHMS, "Algorithm:")]
     )
 
 
@@ -103,108 +115,114 @@ for main_category in MAIN_CATEGORIES:
         Input(f"{main_category}_category_{axis}_residual_correlations", "value")
         for main_category in MAIN_CATEGORIES
         for axis in AXES
-    ],
+    ]
+    + [Input(f"algorithm_{axis}_residual_correlations", "value") for axis in AXES],
 )
-def _fill_graph_tab_category(correlations, correlations_std, number_participants, *args):
+def _fill_graph_tab_category(correlations_data, correlations_std_data, number_participants_data, *args):
+    from website.utils.graphs import heatmap_by_sorted_index, add_custom_legend_axis
+
     (
         examination_categories_row,
-        laboratory_categories_row,
-        questionnaire_categories_row,
         examination_categories_column,
+        laboratory_categories_row,
         laboratory_categories_column,
+        questionnaire_categories_row,
         questionnaire_categories_column,
+        algorithms_row,
+        algorithms_column,
     ) = args
-    print(args)
-    print(
-        "examination_categories_row:",
-        examination_categories_row,
-        "\nlaboratory_categories_row:",
-        laboratory_categories_row,
-        "\nquestionnaire_categories_row:",
-        questionnaire_categories_row,
-        "\n\nexamination_categories_column:",
-        examination_categories_column,
-        "\nlaboratory_categories_column:",
-        laboratory_categories_column,
-        "\nquestionnaire_categories_column:",
-        questionnaire_categories_column,
-        "\n\n\n",
+
+    categories_to_display = {
+        AXIS_ROW: {
+            "examination": examination_categories_row,
+            "laboratory": laboratory_categories_row,
+            "questionnaire": questionnaire_categories_row,
+        },
+        AXIS_COLUMN: {
+            "examination": examination_categories_column,
+            "laboratory": laboratory_categories_column,
+            "questionnaire": questionnaire_categories_column,
+        },
+    }
+
+    algorithms = {AXIS_ROW: algorithms_row, AXIS_COLUMN: algorithms_column}
+
+    correlations = pd.DataFrame(correlations_data).set_index(["main_category", "category", "algorithm"])
+    correlations.columns = pd.MultiIndex.from_tuples(
+        list(map(eval, correlations.columns.tolist())), names=["main_category", "category", "algorithm"]
     )
-    return "Hey", None
-    # correlations_raw = pd.DataFrame(data_category).set_index(
-    #     ["dimension_1", "subdimension_1", "r2_1", "r2_std_1", "dimension_2", "subdimension_2", "r2_2", "r2_std_2"]
-    # )
-    # correlations_raw.columns = pd.MultiIndex.from_tuples(
-    #     list(map(eval, correlations_raw.columns.tolist())), names=["subset_method", "correlation_type"]
-    # )
-    # correlations = correlations_raw[[(subset_method, correlation_type), (subset_method, "number_variables")]]
-    # correlations.columns = ["correlation", "number_variables"]
-    # correlations.reset_index(inplace=True)
+    correlations_std = pd.DataFrame(correlations_std_data).set_index(["main_category", "category", "algorithm"])
+    correlations_std.columns = pd.MultiIndex.from_tuples(
+        list(map(eval, correlations_std.columns.tolist())), names=["main_category", "category", "algorithm"]
+    )
 
-    # table_correlations = correlations.pivot(
-    #     index=["dimension_1", "subdimension_1"],
-    #     columns=["dimension_2", "subdimension_2"],
-    #     values="correlation",
-    # ).loc[ORDER_DIMENSIONS, ORDER_DIMENSIONS]
-    # np.fill_diagonal(table_correlations.values, np.nan)
+    number_participants = pd.DataFrame(number_participants_data).set_index(["main_category", "category"])
+    number_participants.columns = pd.MultiIndex.from_tuples(
+        list(map(eval, number_participants.columns.tolist())), names=["main_category", "category"]
+    )
+    hovertemplate = (
+        "Correlation: %{z:.3f} +- %{customdata[0]:.3f} <br>"
+        + list(AXES.values())[0]
+        + ": %{y} <br>"
+        + list(AXES.values())[1]
+        + ": %{x} <br>%{customdata[1]} participants<br><extra></extra>"
+    )
 
-    # customdata_list = []
-    # for customdata_item in ["r2_1", "r2_std_1", "r2_2", "r2_std_2", "number_variables"]:
-    #     customdata_list.append(
-    #         correlations.pivot(
-    #             index=["dimension_1", "subdimension_1"],
-    #             columns=["dimension_2", "subdimension_2"],
-    #             values=customdata_item,
-    #         )
-    #         .loc[ORDER_DIMENSIONS, ORDER_DIMENSIONS]
-    #         .values
-    #     )
-    # stacked_customdata = list(map(list, np.dstack(customdata_list)))
+    indexes_to_take = {AXIS_ROW: [], AXIS_COLUMN: []}
+    indexes_to_rename = {}
 
-    # customdata = pd.DataFrame(None, index=ORDER_DIMENSIONS, columns=ORDER_DIMENSIONS)
-    # customdata[customdata.columns] = stacked_customdata
+    for axis in AXES:
+        for main_category in MAIN_CATEGORIES:
+            indexes_to_rename[main_category] = MAIN_CATEGORIES[main_category]
+            if categories_to_display[axis][main_category] == ["all"]:
+                categories_to_display[axis][main_category] = (
+                    pd.Index(list(CATEGORIES[main_category].keys())).drop("all").to_list()
+                )
+            for category in categories_to_display[axis][main_category]:
+                indexes_to_rename[category] = CATEGORIES[main_category][category]
+                for algorithm in algorithms[axis]:
+                    indexes_to_rename[algorithm] = ALGORITHMS[algorithm]
+                    indexes_to_take[axis].append([main_category, category, algorithm])
 
-    # hovertemplate = "Correlation: %{z:.3f} <br><br>Dimensions 1: %{x} <br>R²: %{customdata[0]:.3f} +- %{customdata[1]:.3f} <br>Dimensions 2: %{y}<br>R²: %{customdata[2]:.3f} +- %{customdata[3]:.3f} <br>Number variables: %{customdata[4]}<br><extra></extra>"
+    correlations_to_display = correlations.loc[indexes_to_take[AXIS_ROW], indexes_to_take[AXIS_COLUMN]]
+    correlations_std_to_display = correlations_std.loc[indexes_to_take[AXIS_ROW], indexes_to_take[AXIS_COLUMN]]
+    number_participants_to_display = pd.DataFrame(
+        None,
+        index=pd.MultiIndex.from_tuples(indexes_to_take[AXIS_ROW]),
+        columns=pd.MultiIndex.from_tuples(indexes_to_take[AXIS_COLUMN]),
+    )
+    number_participants_to_display[number_participants_to_display.columns] = number_participants.loc[
+        pd.MultiIndex.from_tuples(map(lambda line: line[:2], indexes_to_take[AXIS_ROW])),
+        pd.MultiIndex.from_tuples(map(lambda line: line[:2], indexes_to_take[AXIS_COLUMN])),
+    ].values
 
-    # if order_by == "clustering":
-    #     fig = heatmap_by_clustering(table_correlations, hovertemplate, customdata)
-    # elif order_by == "r2":
-    #     sorted_dimensions = (
-    #         correlations.set_index(["dimension_1", "subdimension_1"])
-    #         .sort_values(by="r2_1", ascending=False)
-    #         .index.drop_duplicates()
-    #     )
+    customdata_list = [correlations_std_to_display, number_participants_to_display]
+    stacked_customdata = list(map(list, np.dstack(customdata_list)))
+    customdata = pd.DataFrame(
+        stacked_customdata, index=correlations_to_display.index, columns=correlations_to_display.columns
+    )
 
-    #     sorted_table_correlations = table_correlations.loc[sorted_dimensions, sorted_dimensions]
-    #     sorted_customdata = customdata.loc[sorted_dimensions, sorted_dimensions]
+    correlations_to_display.rename(index=indexes_to_rename, columns=indexes_to_rename, inplace=True)
+    correlations_std_to_display.rename(index=indexes_to_rename, columns=indexes_to_rename, inplace=True)
+    customdata.rename(index=indexes_to_rename, columns=indexes_to_rename, inplace=True)
 
-    #     fig = heatmap_by_sorted_dimensions(sorted_table_correlations, hovertemplate, sorted_customdata)
+    fig = heatmap_by_sorted_index(correlations_to_display, hovertemplate, customdata)
 
-    # else:  # order_by == "custom"
-    #     sorted_dimensions = (
-    #         correlations.set_index(["dimension_1", "subdimension_1"]).loc[CUSTOM_ORDER].index.drop_duplicates()
-    #     )
+    fig = add_custom_legend_axis(fig, correlations_to_display.index, -120, -70, 0, horizontal=False)
+    fig = add_custom_legend_axis(fig, correlations_to_display.columns, -120, -70, 0, horizontal=True)
 
-    #     sorted_table_correlations = table_correlations.loc[sorted_dimensions, sorted_dimensions]
-    #     sorted_customdata = customdata.loc[sorted_dimensions, sorted_dimensions]
-    #     sorted_table_correlations.index.names = ["dimension", "subdimension"]
-    #     fig = heatmap_by_sorted_dimensions(sorted_table_correlations, hovertemplate, sorted_customdata)
+    fig.update_layout(
+        yaxis={"showgrid": False, "zeroline": False, "showticklabels": False},
+        xaxis={"showgrid": False, "zeroline": False, "showticklabels": False},
+        width=GRAPH_SIZE,
+        height=GRAPH_SIZE,
+        margin={"l": 0, "r": 0, "b": 0, "t": 0},
+    )
 
-    #     fig = add_custom_legend_axis(fig, sorted_table_correlations)
-
-    # fig.update_layout(
-    #     yaxis={"showgrid": False, "zeroline": False},
-    #     xaxis={"showgrid": False, "zeroline": False},
-    #     width=GRAPH_SIZE,
-    #     height=GRAPH_SIZE,
-    #     margin={"l": 0, "r": 0, "b": 0, "t": 0},
-    # )
-
-    # return (
-    #     fig,
-    #     f"Average correlation = {correlations['correlation'].mean().round(3)} +- {correlations['correlation'].std().round(3)}",
-    #     histogram_correlation(table_correlations),
-    # )
+    return (
+        f"Average correlation = {correlations_to_display.mean().mean().round(3)} +- {pd.Series(correlations_to_display.values.flatten()).std().round(3)}, number of valid correlations {number_participants_to_display.notna().sum().sum()}",
+        fig,
+    )
 
 
 LAYOUT = dbc.Container(
@@ -224,8 +242,8 @@ LAYOUT = dbc.Container(
         html.Br(),
         dbc.Row(
             [
-                dbc.Col(html.H3(f"{AXES[list(AXES.keys())[0]]} settings"), width={"size": 2, "offset": 2}),
-                dbc.Col(html.H3(f"{AXES[list(AXES.keys())[1]]} settings"), width={"size": 2, "offset": 4}),
+                dbc.Col(html.H3(f"{AXES[AXIS_ROW]} settings"), width={"size": 2, "offset": 2}),
+                dbc.Col(html.H3(f"{AXES[AXIS_COLUMN]} settings"), width={"size": 2, "offset": 4}),
             ]
         ),
         html.Br(),
@@ -236,8 +254,15 @@ LAYOUT = dbc.Container(
             ]
         ),
         dbc.Col(
-            [html.H3(id="title_residual_correlations"), dcc.Loading(id="heatmap_residual_correlations")],
-            width={"size": 6},
+            [
+                dcc.Loading(
+                    [
+                        html.H3(id="title_residual_correlations"),
+                        dcc.Graph(id="heatmap_residual_correlations", config=DOWNLOAD_CONFIG),
+                    ]
+                )
+            ],
+            width={"offset": 2},
         ),
     ],
     fluid=True,
