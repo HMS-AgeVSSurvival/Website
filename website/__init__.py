@@ -367,3 +367,5 @@ CATEGORIES = {
 ALGORITHMS = {"best": "Best", "elastic_net": "Elastic Net", "light_gbm": "Tree base algorithm"}
 
 AXES = {"row": "Row", "column": "Column"}
+
+GRAPH_SIZE = 1200

@@ -14,11 +14,8 @@ from website import METHODS, TARGETS, MAIN_CATEGORIES, CATEGORIES, ALGORITHMS, A
 
 @APP.callback(
     Output("memory_residual_correlations", "data"),
-    [
-        Input("method_residual_correlations", "value"),
-        Input("target_row_residual_correlations", "value"),
-        Input("target_column_residual_correlations", "value"),
-    ],
+    [Input("method_residual_correlations", "value")]
+    + [Input(f"target_{axis}_residual_correlations", "value") for axis in AXES],
 )
 def get_residual_correlations(method, target_row, target_column):
     path_to_fetch = f"data/correlation/residual/{method}_{target_row}_{target_column}.feather"
@@ -30,11 +27,8 @@ def get_residual_correlations(method, target_row, target_column):
 
 @APP.callback(
     Output("memory_std_residual_correlations", "data"),
-    [
-        Input("method_residual_correlations", "value"),
-        Input("target_row_residual_correlations", "value"),
-        Input("target_column_residual_correlations", "value"),
-    ],
+    [Input("method_residual_correlations", "value")]
+    + [Input(f"target_{axis}_residual_correlations", "value") for axis in AXES],
 )
 def get_residual_correlations_std(method, target_row, target_column):
     path_to_fetch = f"data/correlation/residual/{method}_std_{target_row}_{target_column}.feather"
@@ -48,10 +42,7 @@ def get_residual_correlations_std(method, target_row, target_column):
 
 @APP.callback(
     Output("memory_number_participants_residual_correlations", "data"),
-    [
-        Input("target_row_residual_correlations", "value"),
-        Input("target_column_residual_correlations", "value"),
-    ],
+    [Input(f"target_{axis}_residual_correlations", "value") for axis in AXES],
 )
 def get_residual_correlations_number_partitipants(target_row, target_column):
     path_to_fetch = f"data/correlation/residual/number_participants_{target_row}_{target_column}.feather"
@@ -123,6 +114,7 @@ def _fill_graph_tab_category(correlations, correlations_std, number_participants
         laboratory_categories_column,
         questionnaire_categories_column,
     ) = args
+    print(args)
     print(
         "examination_categories_row:",
         examination_categories_row,
