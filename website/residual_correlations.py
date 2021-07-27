@@ -96,7 +96,7 @@ for main_category in MAIN_CATEGORIES:
             Output(f"{main_category}_category_{axis}_residual_correlations", "value"),
             Input(f"{main_category}_category_{axis}_residual_correlations", "value"),
         )
-        def update_categories_row(categories):
+        def update_categories_row_residual_correlations(categories):
             if "all" in categories and len(categories) > 1:
                 categories.remove("all")
                 return categories
@@ -181,8 +181,9 @@ def _fill_heatmap_residual_correlations(correlations_data, correlations_std_data
             for category in categories_to_display[axis][main_category]:
                 indexes_to_rename[category] = CATEGORIES[main_category][category]
                 for algorithm in algorithms[axis]:
-                    indexes_to_rename[algorithm] = ALGORITHMS[algorithm]
                     indexes_to_take[axis].append([main_category, category, algorithm])
+        for algorithm in algorithms[axis]:
+            indexes_to_rename[algorithm] = ALGORITHMS[algorithm]
 
     correlations_to_display = correlations.loc[indexes_to_take[AXIS_ROW], indexes_to_take[AXIS_COLUMN]]
     correlations_std_to_display = correlations_std.loc[indexes_to_take[AXIS_ROW], indexes_to_take[AXIS_COLUMN]]

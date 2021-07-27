@@ -1,8 +1,10 @@
-import numpy as np
 import plotly.graph_objs as go
 from plotly.figure_factory import create_dendrogram
 
-from website import GRAPH_SIZE, MAX_LENGTH_CATEGORY
+import numpy as np
+import pandas as pd
+
+from website import GRAPH_SIZE, MAX_LENGTH_CATEGORY, ALGORITHMS
 from website.utils import BLUE_WHITE_RED
 
 
