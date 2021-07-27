@@ -118,7 +118,7 @@ for main_category in MAIN_CATEGORIES:
     ]
     + [Input(f"algorithm_{axis}_residual_correlations", "value") for axis in AXES],
 )
-def _fill_graph_tab_category(correlations_data, correlations_std_data, number_participants_data, *args):
+def _fill_heatmap_residual_correlations(correlations_data, correlations_std_data, number_participants_data, *args):
     from website.utils.graphs import heatmap_by_sorted_index, add_custom_legend_axis
 
     (

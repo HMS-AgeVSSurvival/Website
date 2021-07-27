@@ -3,6 +3,7 @@ import collections
 METHODS = {"pearson": "Pearson", "spearman": "Spearman"}
 
 TARGETS = {"age": "Age", "all": "Survival all", "cvd": "Survival CVD", "cancer": "Survival cancer"}
+AGE_SURVIVAL = {"age": "Age", "survival": "Survival"}
 
 MAIN_CATEGORIES = {"examination": "Examination", "laboratory": "Laboratory", "questionnaire": "Questionnaire"}
 
