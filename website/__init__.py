@@ -50,7 +50,7 @@ LIST_EXAMINATION_CATEGORIES = [
     "Audiometry",
     "Dual-Energy__X-ray__Absorptiometry__-__Abdominal__Aortic__Calcification",
     "Tuberculosis",
-]
+][:10]
 DICT_EXAMINATION_CATEGORIES = dict(
     zip(
         LIST_EXAMINATION_CATEGORIES,
@@ -258,7 +258,7 @@ LIST_LABORATORY_CATEGORIES = [
     "Human__Papillomavirus__(HPV)__DNA__-__Vaginal__Swab:__Roche__Linear__Array",
     "Aromatic__Amines__-__Urine",
     "Ferritin",
-]
+][:10]
 DICT_LABORATORY_CATEGORIES = dict(
     zip(
         LIST_LABORATORY_CATEGORIES,
@@ -341,7 +341,7 @@ LIST_QUESTIONNAIRE_CATEGORIES = [
     "Audiometry",
     "Kidney__Conditions",
     "Tuberculosis",
-]
+][:10]
 DICT_QUESTIONNAIRE_CATEGORIES = dict(
     zip(
         LIST_QUESTIONNAIRE_CATEGORIES,
@@ -364,4 +364,22 @@ CATEGORIES = {
     "questionnaire": QUESTIONNAIRE_CATEGORIES,
 }
 
-ALGORITHMS = {"best": "Best", "elastic_net": "Elastic Net", "light_gbm": "Tree base algorithm"}
+ALGORITHMS = {"elastic_net": "Elastic Net", "light_gbm": "Tree base algorithm", "best": "Best"}
+
+AXES = {"row": "Row", "column": "Column"}
+AXIS_ROW, AXIS_COLUMN = list(AXES.keys())
+
+GRAPH_SIZE = 1200
+MAX_LENGTH_CATEGORY = 25
+
+DOWNLOAD_CONFIG = {"toImageButtonOptions": {"format": "svg"}}
+
+FOLDS = {"train": "Trainning", "test": "Testing"}
+
+SCORES_SURVIVAL = {"c_index": "C-index", "diff_c_index": "Difference C-index"}
+SCORES = {
+    "age": {"r2": "r²", "rmse": "RMSE"},
+    "all": SCORES_SURVIVAL,
+    "cvd": SCORES_SURVIVAL,
+    "cancer": SCORES_SURVIVAL,
+}
