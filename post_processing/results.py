@@ -1,111 +1,97 @@
 import pandas as pd
+import numpy as np
 
-from website import TARGETS, CATEGORIES, MAIN_CATEGORIES, ALGORITHMS, FOLDS, SCORES
-from post_processing import DATA_INFORMATION, RANDOM_STATES
+from website import TARGETS, MAIN_CATEGORIES, ALGORITHMS, FOLDS, SCORES
+from post_processing import RANDOM_STATES
 
-# list_indexes = []
-# for main_category in MAIN_CATEGORIES:
-#     for category in CATEGORIES[main_category]:
-#         if category == "all":
-#             continue
-#         list_indexes.append([main_category, category])
 
-# list_columns = []
-# for target in TARGETS:
-#     for data_information_type in DATA_INFORMATION:
-#         for data_information in DATA_INFORMATION[data_information_type]:
-#             # Repete "data_information_type" to match the other columns
-#             list_columns.append([target, data_information_type, data_information_type, data_information])
-#     for fold in FOLDS:
-#         for algorithm in ALGORITHMS:
-#             for score in SCORES[target]:
-#                 list_columns.append([target, algorithm, fold, score])
-#                 list_columns.append([target, algorithm, fold, f"{score}_std"])
+RENAME_TARGETS = {"age": "Age prediction", "all": "Survival all", "cvd": "Survival cvd", "cancer": "Survival cancer"}
 
-# indexes = pd.MultiIndex.from_tuples(list_indexes)
-# columns = pd.MultiIndex.from_tuples(list_columns)
-# merged_results = pd.DataFrame(None, index=indexes, columns=columns)
 
-RENAME_TARGETS = {"Age prediction": "age", "Survival all": "all", "Survival cvd": "cvd", "Survival cancer": "cancer"}
-RENAME_INFORMATION = {"Shape after preprocessing": "numbers", "Age range": "age_ranges"}
-RENAME_SCORES = {
-    "r²": "r2",
-    "r² std": "r2_std",
-    "RMSE": "rmse",
-    "RMSE std": "rmse_std",
-    "C-index": "c_index",
-    "C-index std": "c_index_std",
-}
+list_new_results = []
+for main_category in MAIN_CATEGORIES:
+    results_0 = pd.read_excel(
+        "data/Results.xlsx", f"{main_category} {RANDOM_STATES[0]}", header=[0, 1, 2], index_col=[0]
+    )
+    results_1 = pd.read_excel(
+        "data/Results.xlsx", f"{main_category} {RANDOM_STATES[1]}", header=[0, 1, 2], index_col=[0]
+    )
 
-results_0 = pd.read_excel("data/Results.xlsx", f"examination {RANDOM_STATES[0]}", header=[0, 1, 2], index_col=[0])
-list_new_columns = []
-list_former_columns = []
-for levels_column in results_0.columns:
-    if (
-        levels_column[0] in RENAME_TARGETS.keys() and levels_column[2][-2:] != ".1"
-    ):  # .1 is how pandas interprets the separations
-        list_former_columns.append(levels_column)
+    new_results = pd.DataFrame(
+        None,
+        index=results_0.index,
+        columns=pd.MultiIndex.from_tuples([("age", "numbers", "numbers", "n_participants")]),
+    )
 
-        new_column = [RENAME_TARGETS[levels_column[0]]]
-        if levels_column[1] in RENAME_INFORMATION.keys():
-            new_column.append(RENAME_INFORMATION[levels_column[1]])
-            new_column.append(RENAME_INFORMATION[levels_column[1]])  # Twice to match with the scores depth
-            new_column.append(levels_column[2])
-        else:
-            new_column.append(levels_column[1])
-            if "train" in levels_column[2]:
-                new_column.append("train")
-                new_column.append(RENAME_SCORES[levels_column[2][6:]])  # "5" for test "+1" for space
-            else:
-                new_column.append("test")
-                new_column.append(RENAME_SCORES[levels_column[2][5:]])  # "4" for test "+1" for space
+    for target in TARGETS:
+        name_target = RENAME_TARGETS[target]
 
-        list_new_columns.append(new_column)
+        new_results[(target, "numbers", "numbers", "n_participants")] = results_0[
+            (name_target, "Shape after preprocessing", "n_participants")
+        ]
+        new_results[(target, "numbers", "numbers", "n_variables")] = results_0[
+            (name_target, "Shape after preprocessing", "n_variables")
+        ]
+        new_results[(target, "age_ranges", "age_ranges", "min")] = results_0[(name_target, "Age range", "min")]
+        new_results[(target, "age_ranges", "age_ranges", "max")] = results_0[(name_target, "Age range", "max")]
 
-former_columns = pd.MultiIndex.from_tuples(list_former_columns)
-new_columns = pd.MultiIndex.from_tuples(list_new_columns)
-new_results_0 = results_0[former_columns]
-new_results_0.columns = new_columns
-print(new_results_0)
-#     for target in TARGETS:
-#         if target == "age":
-#             title_target = "Age prediction"
-#         else:
-#             title_target = f"Survival {target}"
+        for algorithm in ALGORITHMS:
+            if algorithm == "best":
+                continue
+            for score in SCORES[target]:
+                name_score = SCORES[target][score]
+                if score != "diff_c_index":
+                    comparison = pd.DataFrame(None)
+                    comparison[RANDOM_STATES[0]] = results_0[(name_target, algorithm, f"test {name_score}")]
+                    comparison[RANDOM_STATES[1]] = results_1[(name_target, algorithm, f"test {name_score}")]
+                    idx_best_0 = comparison.T.idxmax() == RANDOM_STATES[0]
+                    idx_best_1 = comparison.T.idxmax() == RANDOM_STATES[1]
 
-#         merged_results.loc[
-#             main_category,
-#             [
-#                 (target, "numbers", "numbers", "n_participants"),
-#                 (target, "numbers", "numbers", "n_variables"),
-#                 (target, "age_ranges", "age_ranges", "min"),
-#                 (target, "age_ranges", "age_ranges", "max"),
-#             ],
-#         ] = results_0.loc[
-#             merged_results.loc[main_category].index,
-#             [
-#                 (title_target, "Shape after preprocessing", "n_participants"),
-#                 (title_target, "Shape after preprocessing", "n_variables"),
-#                 (title_target, "Age range", "min"),
-#                 (title_target, "Age range", "max"),
-#             ],
-#         ].values
+                    for fold in FOLDS:
+                        new_results.loc[idx_best_0, (target, algorithm, fold, score)] = results_0.loc[
+                            idx_best_0, (name_target, algorithm, f"{fold} {name_score}")
+                        ]
+                        new_results.loc[idx_best_1, (target, algorithm, fold, score)] = results_1.loc[
+                            idx_best_1, (name_target, algorithm, f"{fold} {name_score}")
+                        ]
+                        new_results.loc[idx_best_0, (target, algorithm, fold, f"{score}_std")] = results_0.loc[
+                            idx_best_0, (name_target, algorithm, f"{fold} {name_score} std")
+                        ]
+                        new_results.loc[idx_best_1, (target, algorithm, fold, f"{score}_std")] = results_1.loc[
+                            idx_best_1, (name_target, algorithm, f"{fold} {name_score} std")
+                        ]
+                else:  # score == "diff_c_index"
+                    comparison = pd.DataFrame(None)
+                    comparison[RANDOM_STATES[0]] = results_0[(f"Basic survival {target}", algorithm, "test C-index")]
+                    comparison[RANDOM_STATES[1]] = results_1[(f"Basic survival {target}", algorithm, "test C-index")]
+                    idx_best_0 = comparison.T.idxmax() == RANDOM_STATES[0]
+                    idx_best_1 = comparison.T.idxmax() == RANDOM_STATES[1]
 
-#         for fold in FOLDS:
-#             for algorithm in ALGORITHMS:
-#                 for score in SCORES[target]:
-#                     merged_results.loc[
-#                         main_category,
-#                         [(target, algorithm, fold, score), (target, algorithm, fold, f"{score}_std")],
-#                     ] = results_0[
-#                         [
-#                             (title_target, algorithm, f"{fold} {SCORES[target][score]}"),
-#                             (title_target, algorithm, f"{fold} {SCORES[target][score]} std"),
-#                         ]
-#                     ]
-#                     break
-#                 break
-#             break
-#         break
-#     break
-# print(merged_results)
+                    for fold in FOLDS:
+                        new_results.loc[idx_best_0, (target, algorithm, fold, score)] = (
+                            new_results.loc[idx_best_0, (target, algorithm, fold, "c_index")]
+                            - results_0.loc[idx_best_0, (f"Basic survival {target}", algorithm, f"{fold} C-index")]
+                        )
+
+                        new_results.loc[idx_best_1, (target, algorithm, fold, score)] = (
+                            new_results.loc[idx_best_1, (target, algorithm, fold, "c_index")]
+                            - results_1.loc[idx_best_1, (f"Basic survival {target}", algorithm, f"{fold} C-index")]
+                        )
+
+                        new_results.loc[idx_best_0, (target, algorithm, fold, f"{score}_std")] = np.sqrt(
+                            new_results.loc[idx_best_0, (target, algorithm, fold, "c_index_std")] ** 2
+                            + results_0.loc[idx_best_0, (f"Basic survival {target}", algorithm, f"{fold} C-index std")]
+                            ** 2
+                        )
+
+                        new_results.loc[idx_best_1, (target, algorithm, fold, f"{score}_std")] = np.sqrt(
+                            new_results.loc[idx_best_1, (target, algorithm, fold, "c_index_std")] ** 2
+                            + results_1.loc[idx_best_1, (f"Basic survival {target}", algorithm, f"{fold} C-index std")]
+                            ** 2
+                        )
+    list_new_results.append(new_results)
+
+
+merged_new_results = pd.concat(list_new_results, keys=MAIN_CATEGORIES.keys(), names=["main_category", "category"])
+merged_new_results.columns = map(str, merged_new_results.columns.tolist())
+merged_new_results.reset_index().to_feather("data/scores.feather")
