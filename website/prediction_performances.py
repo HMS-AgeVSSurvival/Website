@@ -65,6 +65,18 @@ def update_targets_prediction_performances(targets):
 def update_metric_prediction_performances(targets):
     if len(targets) > 0:
         return get_options_from_dict(SCORES[targets[0]]), list(SCORES[targets[0]].keys())[0]
+    else:
+        return get_options_from_dict(SCORES[list(SCORES.keys())[0]]), list(SCORES[list(SCORES.keys())[0]].keys())[0]
+
+
+@APP.callback(
+    Output("algorithm_prediction_performances", "value"), Input(f"algorithm_prediction_performances", "value")
+)
+def update_algorithms_prediction_performances(algorithms):
+    if "best" in algorithms and len(algorithms) > 1:
+        return ["best"]
+    else:
+        raise PreventUpdate
 
 
 @APP.callback(
@@ -84,6 +96,13 @@ def _fill_bars_prediction_performances(
     import plotly.graph_objs as go
     from website.utils.graphs import add_custom_legend_axis
 
+    if len(targets) == 0:
+        return "Please select a target", go.Figure(), "", go.Figure()
+    elif len(examination_categories) + len(laboratory_categories) + len(questionnaire_categories) == 0:
+        return "Please select a category", go.Figure(), "", go.Figure()
+    elif len(algorithms) == 0:
+        return "Please select an algorithm", go.Figure(), "", go.Figure()
+
     scores_full = pd.DataFrame(scores_data).set_index(["main_category", "category"])
     scores_full.columns = pd.MultiIndex.from_tuples(
         list(map(eval, scores_full.columns.tolist())), names=["target", "algorithm", "fold", "metric"]
@@ -98,6 +117,13 @@ def _fill_bars_prediction_performances(
     indexes_to_take = []
     indexes_to_rename = {}
 
+    if algorithms == ["best"]:
+        algorithms = list(ALGORITHMS.keys())
+        algorithms.remove("best")
+        show_best = True
+    else:
+        show_best = False
+
     for main_category in MAIN_CATEGORIES:
         indexes_to_rename[main_category] = MAIN_CATEGORIES[main_category]
         if categories_to_display[main_category] == ["all"]:
@@ -111,6 +137,8 @@ def _fill_bars_prediction_performances(
         indexes_to_rename[algorithm] = ALGORITHMS[algorithm]
 
     scores = scores_full.loc[indexes_to_take, (targets, ["numbers", "age_ranges"] + algorithms)]
+    if show_best:
+        print(scores)
     scores.rename(index=indexes_to_rename, inplace=True)
 
     if targets != ["age"]:
@@ -126,9 +154,12 @@ def _fill_bars_prediction_performances(
             "fold", axis="columns"
         )
 
-        titles[
-            fold
-        ] = f"{FOLDS[fold]} average {SCORES[targets[0]][metric]} = {pd.Series(scores_fold.loc[:, (targets, algorithms, metric)].values.flatten()).mean().round(3)} +- {pd.Series(scores_fold.loc[:, (targets, algorithms, metric)].values.flatten()).std().round(3)}"
+        if scores.shape[0] > 1:
+            titles[
+                fold
+            ] = f"{FOLDS[fold]}, average {SCORES[targets[0]][metric]} = {pd.Series(scores_fold.loc[:, (targets, algorithms, metric)].values.flatten()).mean().round(3)} +- {pd.Series(scores_fold.loc[:, (targets, algorithms, metric)].values.flatten()).std().round(3)}"
+        else:
+            titles[fold] = FOLDS[fold]
 
         x_positions = pd.Series(np.arange(5, 10 * len(scores_fold.index) + 5, 10), index=scores_fold.index)
 
