@@ -365,7 +365,7 @@ CATEGORIES = {
     "questionnaire": QUESTIONNAIRE_CATEGORIES,
 }
 
-ALGORITHMS = {"elastic_net": "Elastic Net", "light_gbm": "Tree base algorithm", "best": "Best"}
+ALGORITHMS = {"elastic_net": "Elastic Net", "light_gbm": "Tree based algorithm", "best": "Best"}
 
 AXES = {"row": "Row", "column": "Column"}
 AXIS_ROW, AXIS_COLUMN = list(AXES.keys())
@@ -375,11 +375,14 @@ MAX_LENGTH_CATEGORY = 25
 
 DOWNLOAD_CONFIG = {"toImageButtonOptions": {"format": "svg"}}
 
-FOLDS = {"train": "Trainning", "test": "Testing"}
+FOLDS = {
+    "train": "Trainning (from which we get the feature importances)",
+    "test": "Testing (from which we get the residuals)",
+}
 
 SCORES_SURVIVAL = {"c_index": "C-index", "diff_c_index": "Difference C-index"}
 SCORES = {
-    "age": {"r2": "r²", "rmse": "RMSE"},
+    "age": {"r2": "R²", "rmse": "RMSE"},
     "all": SCORES_SURVIVAL,
     "cvd": SCORES_SURVIVAL,
     "cancer": SCORES_SURVIVAL,
