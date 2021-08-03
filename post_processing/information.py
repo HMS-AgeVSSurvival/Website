@@ -35,8 +35,8 @@ if __name__ == "__main__":
 
         list_new_information.append(new_information)
 
-    merged_new_results = pd.concat(
+    merged_new_information = pd.concat(
         list_new_information, keys=MAIN_CATEGORIES.keys(), names=["main_category", "category"]
     )
-    merged_new_results.columns = map(str, merged_new_results.columns.tolist())
-    merged_new_results.reset_index().to_feather("data/informations.feather")
+    merged_new_information.columns = map(str, merged_new_information.columns.tolist())
+    merged_new_information.reset_index().to_feather("data/information.feather")
