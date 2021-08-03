@@ -330,8 +330,6 @@ def _fill_heatmap_residual_correlations(
         margin={"l": 0, "r": 0, "b": 0, "t": 0},
     )
 
-    print(number_participants_to_display.notna())
-    print(number_participants_to_display.notna().sum().sum())
     if correlations_to_display.shape[0] == 1 and correlations_to_display.shape[1] == 1:
         title = f"number of valid correlations {number_participants_to_display.notna().sum().sum()}"
     else:
