@@ -86,12 +86,23 @@ def update_algorithms_prediction_performances(algorithms):
         Output("title_train_prediction_performances", "children"),
         Output("bars_train_prediction_performances", "figure"),
     ],
-    [Input("memory_prediction_performances", "data"), Input("targets_prediction_performances", "value")]
+    [
+        Input("memory_prediction_performances", "data"),
+        Input("memory_information_prediction_performances", "data"),
+        Input("targets_prediction_performances", "value"),
+    ]
     + [Input(f"{main_category}_category_prediction_performances", "value") for main_category in MAIN_CATEGORIES]
     + [Input(f"algorithm_prediction_performances", "value"), Input(f"metric_prediction_performances", "value")],
 )
 def _fill_bars_prediction_performances(
-    scores_data, targets, examination_categories, laboratory_categories, questionnaire_categories, algorithms, metric
+    scores_data,
+    information_data,
+    targets,
+    examination_categories,
+    laboratory_categories,
+    questionnaire_categories,
+    algorithms,
+    metric,
 ):
     import plotly.graph_objs as go
     from website.utils.graphs import add_custom_legend_axis
@@ -103,9 +114,13 @@ def _fill_bars_prediction_performances(
     elif len(algorithms) == 0:
         return "Please select an algorithm", go.Figure(), "", go.Figure()
 
-    scores_full = pd.DataFrame(scores_data).set_index(["main_category", "category"])
+    scores_full = pd.DataFrame(scores_data).set_index(["main_category", "category", "algorithm"])
     scores_full.columns = pd.MultiIndex.from_tuples(
-        list(map(eval, scores_full.columns.tolist())), names=["target", "algorithm", "fold", "metric"]
+        list(map(eval, scores_full.columns.tolist())), names=["target", "fold", "metric"]
+    )
+    information_full = pd.DataFrame(information_data).set_index(["main_category", "category"])
+    information_full.columns = pd.MultiIndex.from_tuples(
+        list(map(eval, information_full.columns.tolist())), names=["target", "information", "detail"]
     )
 
     categories_to_display = {
@@ -114,9 +129,6 @@ def _fill_bars_prediction_performances(
         "questionnaire": questionnaire_categories,
     }
 
-    indexes_to_take = []
-    indexes_to_rename = {}
-
     if algorithms == ["best"]:
         algorithms = list(ALGORITHMS.keys())
         algorithms.remove("best")
@@ -124,22 +136,28 @@ def _fill_bars_prediction_performances(
     else:
         show_best = False
 
+    list_indexes_to_take = []
     for main_category in MAIN_CATEGORIES:
-        indexes_to_rename[main_category] = MAIN_CATEGORIES[main_category]
         if categories_to_display[main_category] == ["all"]:
             categories_to_display[main_category] = (
                 pd.Index(list(CATEGORIES[main_category].keys())).drop("all").to_list()
             )
-        for category in categories_to_display[main_category]:
-            indexes_to_rename[category] = CATEGORIES[main_category][category]
-            indexes_to_take.append([main_category, category])
-    for algorithm in algorithms:
-        indexes_to_rename[algorithm] = ALGORITHMS[algorithm]
+        list_indexes_to_take.extend(
+            pd.MultiIndex.from_product(([main_category], categories_to_display[main_category], algorithms)).to_list()
+        )
+    indexes_to_take = pd.MultiIndex.from_tuples(list_indexes_to_take, names=["main_category", "category", "algorithm"])
+    scores = scores_full.loc[indexes_to_take, (targets, list(FOLDS.keys()), [metric, f"{metric}_std"])]
+    information = information_full.loc[indexes_to_take.droplevel("algorithm").drop_duplicates(), targets]
 
-    scores = scores_full.loc[indexes_to_take, (targets, ["numbers", "age_ranges"] + algorithms)]
     if show_best:
         print(scores)
-    scores.rename(index=indexes_to_rename, inplace=True)
+
+    scores.rename(index=MAIN_CATEGORIES, level="main_category", inplace=True)
+    information.rename(index=MAIN_CATEGORIES, level="main_category", inplace=True)
+    for main_category in MAIN_CATEGORIES:
+        scores.rename(index=CATEGORIES[main_category], level="category", inplace=True)
+        information.rename(index=CATEGORIES[main_category], level="category", inplace=True)
+    scores.rename(index=ALGORITHMS, level="algorithm", inplace=True)
 
     if targets != ["age"]:
         scores.replace(-1, np.nan, inplace=True)
@@ -150,24 +168,23 @@ def _fill_bars_prediction_performances(
     titles = {}
 
     for fold in FOLDS:
-        scores_fold = scores.loc[:, (slice(None), slice(None), ["numbers", "age_ranges", fold])].droplevel(
-            "fold", axis="columns"
-        )
-
-        if scores.shape[0] > 1:
+        scores_fold = scores.loc[:, (slice(None), fold)]
+        if sum(scores_fold.notna().values.flatten()) == 0:
+            return f"{FOLDS[fold]} has no value to show", go.Figure(), "", go.Figure()
+        if scores_fold.shape[0] > 1:
             titles[
                 fold
-            ] = f"{FOLDS[fold]}, average {SCORES[targets[0]][metric]} = {pd.Series(scores_fold.loc[:, (targets, algorithms, metric)].values.flatten()).mean().round(3)} +- {pd.Series(scores_fold.loc[:, (targets, algorithms, metric)].values.flatten()).std().round(3)}"
+            ] = f"{FOLDS[fold]}, average {SCORES[targets[0]][metric]} = {pd.Series(scores_fold.loc[:, (targets, fold, metric)].values.flatten()).mean().round(3)} +- {pd.Series(scores_fold.loc[:, (targets, fold, metric)].values.flatten()).std().round(3)}"
         else:
             titles[fold] = FOLDS[fold]
 
-        x_positions = pd.Series(np.arange(5, 10 * len(scores_fold.index) + 5, 10), index=scores_fold.index)
+        x_positions = pd.Series(np.arange(5, 10 * len(information.index) + 5, 10), index=information.index)
 
         figures[fold] = go.Figure()
         figures[fold].update_layout(
             xaxis={
-                "tickvals": np.arange(5, 10 * len(scores_fold.index) + 5, 10),
-                "ticktext": [" - ".join(elem) for elem in scores_fold.index],
+                "tickvals": np.arange(5, 10 * len(information.index) + 5, 10),
+                "ticktext": [" - ".join(elem) for elem in information.index],
             }
         )
 
@@ -175,19 +192,26 @@ def _fill_bars_prediction_performances(
             for algorithm in algorithms:
                 customdata = np.dstack(
                     (
-                        scores_fold[(target, algorithm, f"{metric}_std")].values.flatten(),
-                        scores_fold[(target, "numbers", "n_participants")].values.flatten(),
-                        scores_fold[(target, "numbers", "n_variables")].values.flatten(),
-                        scores_fold[(target, "age_ranges", "min")].values.flatten().astype(int),
-                        scores_fold[(target, "age_ranges", "max")].values.flatten().astype(int),
-                        [ALGORITHMS[algorithm]] * len(scores_fold.index),
+                        scores_fold.loc[
+                            (slice(None), slice(None), ALGORITHMS[algorithm]), (target, fold, f"{metric}_std")
+                        ].values.flatten(),
+                        information[(target, "numbers", "n_participants")].values.flatten(),
+                        information[(target, "numbers", "n_variables")].values.flatten(),
+                        information[(target, "age_ranges", "min")].values.flatten().astype(int),
+                        information[(target, "age_ranges", "max")].values.flatten().astype(int),
+                        [ALGORITHMS[algorithm]] * len(information.index),
                     )
                 )[0]
 
                 figures[fold].add_bar(
-                    x=x_positions.loc[scores_fold.index].values.flatten(),
-                    y=scores_fold[(target, algorithm, metric)],
-                    error_y={"array": scores_fold[(target, algorithm, f"{metric}_std")], "type": "data"},
+                    x=x_positions.loc[information.index].values.flatten(),
+                    y=scores_fold.loc[(slice(None), slice(None), ALGORITHMS[algorithm]), (target, fold, metric)],
+                    error_y={
+                        "array": scores_fold.loc[
+                            (slice(None), slice(None), ALGORITHMS[algorithm]), (target, fold, f"{metric}_std")
+                        ],
+                        "type": "data",
+                    },
                     name=f"{TARGETS[target]} {ALGORITHMS[algorithm]}",
                     hovertemplate=hovertemplate,
                     customdata=customdata,
@@ -195,10 +219,10 @@ def _fill_bars_prediction_performances(
 
         add_custom_legend_axis(
             figures[fold],
-            scores_fold.index,
+            information.index,
             -120 if metric == "rmse" else -1,
             -60 if metric == "rmse" else -0.5,
-            min(scores_fold.loc[:, (targets, algorithms, metric)].min().min(), 0),
+            min(scores_fold.loc[:, (targets, fold, metric)].min().min(), 0),
         )
 
         figures[fold].update_layout(
@@ -223,7 +247,13 @@ def _fill_bars_prediction_performances(
 LAYOUT = dbc.Container(
     [
         dcc.Loading(
-            dcc.Store(id="memory_prediction_performances", data=pd.read_feather(f"data/scores.feather").to_dict())
+            [
+                dcc.Store(id="memory_prediction_performances", data=pd.read_feather(f"data/scores.feather").to_dict()),
+                dcc.Store(
+                    id="memory_information_prediction_performances",
+                    data=pd.read_feather(f"data/information.feather").to_dict(),
+                ),
+            ]
         ),
         html.H1("Prediction performances"),
         html.Br(),
