@@ -10,6 +10,7 @@ import pandas as pd
 import numpy as np
 
 from website.utils.controls import get_item_radio_items, get_check_list, get_drop_down
+from website.utils.rename import rename
 from website import (
     METHODS,
     TARGETS,
@@ -120,6 +121,23 @@ for main_category in MAIN_CATEGORIES:
                 raise PreventUpdate
 
 
+for key_axis in AXES:
+
+    @APP.callback(
+        Output(f"algorithm_{key_axis}_residual_correlations", "value"),
+        Input(f"algorithm_{key_axis}_residual_correlations", "value"),
+    )
+    def update_algorithms_prediction_performances(algorithms):
+        if "best" in algorithms and len(algorithms) > 1:
+            if algorithms[-1] == "best":  # The last selected algorithm was "best"
+                return ["best"]
+            else:
+                algorithms.remove("best")
+                return algorithms
+        else:
+            raise PreventUpdate
+
+
 @APP.callback(
     [Output("title_residual_correlations", "children"), Output("heatmap_residual_correlations", "figure")],
     [
@@ -154,6 +172,7 @@ def _fill_heatmap_residual_correlations(
         target_row,
         target_column,
     ) = args
+    print(args)
 
     if (
         len(examination_categories_row) + len(laboratory_categories_row) + len(questionnaire_categories_row) == 0
@@ -164,7 +183,7 @@ def _fill_heatmap_residual_correlations(
     elif len(algorithms_row) == 0 or len(algorithms_column) == 0:
         return "Please select an algorithm", go.Figure()
 
-    targets = {AXIS_ROW: target_row, AXIS_COLUMN: target_column}
+    target = {AXIS_ROW: target_row, AXIS_COLUMN: target_column}
 
     categories_to_display = {
         AXIS_ROW: {
@@ -195,13 +214,11 @@ def _fill_heatmap_residual_correlations(
     number_participants.columns = pd.MultiIndex.from_tuples(
         list(map(eval, number_participants.columns.tolist())), names=["main_category", "category"]
     )
-    scores = pd.DataFrame(scores_data).set_index(["main_category", "category"])
+    scores = pd.DataFrame(scores_data).set_index(["main_category", "category", "algorithm"])
     scores.columns = pd.MultiIndex.from_tuples(
-        list(map(eval, scores.columns.tolist())), names=["target", "algorithm", "fold", "metric"]
+        list(map(eval, scores.columns.tolist())), names=["target", "fold", "metric"]
     )
-    scores.drop(
-        index=scores.index[~scores.index.isin(correlations.index.droplevel("algorithm"))], inplace=True
-    )  # TO REMOVE
+    scores = scores.loc[correlations.index]  # TO REMOVE
 
     hovertemplate = (
         "Correlation: %{z:.3f} +- %{customdata[0]:.3f} <br><br>"
@@ -216,89 +233,69 @@ def _fill_heatmap_residual_correlations(
         + "<extra>%{customdata[5]} participants</extra>"
     )
 
-    indexes_to_take = {AXIS_ROW: [], AXIS_COLUMN: []}
-    indexes_to_rename = {}
+    algorithms_to_look_at = {}
+    for key_axis in AXES:
+        if algorithms[key_axis] == ["best"]:
+            algorithms_to_look_at[key_axis] = list(ALGORITHMS.keys())
+            algorithms_to_look_at[key_axis].remove("best")
+        else:
+            algorithms_to_look_at[key_axis] = algorithms[key_axis]
 
+    indexes_to_take = {AXIS_ROW: [], AXIS_COLUMN: []}
     for key_axis in AXES:
         for main_category in MAIN_CATEGORIES:
-            indexes_to_rename[main_category] = MAIN_CATEGORIES[main_category]
             if categories_to_display[key_axis][main_category] == ["all"]:
                 categories_to_display[key_axis][main_category] = (
                     pd.Index(list(CATEGORIES[main_category].keys())).drop("all").to_list()
                 )
-            for category in categories_to_display[key_axis][main_category]:
-                indexes_to_rename[category] = CATEGORIES[main_category][category]
-                for algorithm in algorithms[key_axis]:
-                    indexes_to_take[key_axis].append([main_category, category, algorithm])
-        for algorithm in algorithms[key_axis]:
-            indexes_to_rename[algorithm] = ALGORITHMS[algorithm]
-
-    indexes_row = pd.MultiIndex.from_tuples(indexes_to_take[AXIS_ROW], names=["main_category", "category", "algorithm"])
-    indexes_columns = pd.MultiIndex.from_tuples(
+            indexes_to_take[key_axis].extend(
+                pd.MultiIndex.from_product(
+                    ([main_category], categories_to_display[key_axis][main_category], algorithms_to_look_at[key_axis])
+                ).to_list()
+            )
+    indexes = {}
+    indexes[AXIS_ROW] = pd.MultiIndex.from_tuples(
+        indexes_to_take[AXIS_ROW], names=["main_category", "category", "algorithm"]
+    )
+    indexes[AXIS_COLUMN] = pd.MultiIndex.from_tuples(
         indexes_to_take[AXIS_COLUMN], names=["main_category", "category", "algorithm"]
     )
 
-    correlations_to_display = correlations.loc[indexes_to_take[AXIS_ROW], indexes_to_take[AXIS_COLUMN]]
-    correlations_std_to_display = correlations_std.loc[indexes_to_take[AXIS_ROW], indexes_to_take[AXIS_COLUMN]]
+    correlations_to_display = correlations.loc[indexes[AXIS_ROW], indexes[AXIS_COLUMN]]
+    correlations_std_to_display = correlations_std.loc[indexes[AXIS_ROW], indexes[AXIS_COLUMN]]
     number_participants_to_display = pd.DataFrame(
         None,
-        index=pd.MultiIndex.from_tuples(indexes_to_take[AXIS_ROW]),
-        columns=pd.MultiIndex.from_tuples(indexes_to_take[AXIS_COLUMN]),
+        index=pd.MultiIndex.from_tuples(indexes[AXIS_ROW]),
+        columns=pd.MultiIndex.from_tuples(indexes[AXIS_COLUMN]),
     )
     number_participants_to_display = number_participants.loc[
-        indexes_row.droplevel("algorithm"),
-        indexes_columns.droplevel("algorithm"),
+        indexes[AXIS_ROW].droplevel("algorithm"),
+        indexes[AXIS_COLUMN].droplevel("algorithm"),
     ]
-    number_participants_to_display.index = indexes_row
-    number_participants_to_display.columns = indexes_columns
+    number_participants_to_display.index = indexes[AXIS_ROW]
+    number_participants_to_display.columns = indexes[AXIS_COLUMN]
 
-    scores_template = pd.DataFrame(None, index=indexes_row, columns=indexes_columns)
+    scores_template = pd.DataFrame(None, index=indexes[AXIS_ROW], columns=indexes[AXIS_COLUMN])
     scores_to_display = {AXIS_ROW: scores_template.copy(), AXIS_COLUMN: scores_template.copy()}
     scores_std_to_display = {AXIS_ROW: scores_template.copy(), AXIS_COLUMN: scores_template.copy()}
 
-    for algorithm in algorithms[AXIS_ROW]:
-        scores_list = scores.loc[
-            indexes_row.droplevel("algorithm").drop_duplicates(),
-            (
-                targets[AXIS_ROW],
-                algorithm,
-                "test",
-                [list(metrics[AXIS_ROW].keys())[0], f"{list(metrics[AXIS_ROW].keys())[0]}_std"],
-            ),
-        ]
-        scores_list["algorithm"] = algorithm
-        scores_list = scores_list.reset_index().set_index(["main_category", "category", "algorithm"])
+    transposed_template = scores_template.T
+    transposed_template[indexes[AXIS_ROW]] = scores.loc[
+        indexes[AXIS_ROW], (target[AXIS_ROW], "test", list(metrics[AXIS_ROW].keys())[0])
+    ]
+    scores_to_display[AXIS_ROW] = transposed_template.T
+    transposed_template = scores_template.T
+    transposed_template[indexes[AXIS_ROW]] = scores.loc[
+        indexes[AXIS_ROW], (target[AXIS_ROW], "test", f"{list(metrics[AXIS_ROW].keys())[0]}_std")
+    ]
+    scores_std_to_display[AXIS_ROW] = transposed_template.T
 
-        scores_to_display[AXIS_ROW].loc[scores_list.index] = scores_list[
-            [(targets[AXIS_ROW], algorithm, "test", list(metrics[AXIS_ROW].keys())[0])]
-        ]
-        scores_std_to_display[AXIS_ROW].loc[scores_list.index] = scores_list[
-            [(targets[AXIS_ROW], algorithm, "test", f"{list(metrics[AXIS_ROW].keys())[0]}_std")]
-        ]
-
-    for algorithm in algorithms[AXIS_COLUMN]:
-        scores_list = scores.loc[
-            indexes_columns.droplevel("algorithm").drop_duplicates(),
-            (
-                targets[AXIS_COLUMN],
-                algorithm,
-                "test",
-                [list(metrics[AXIS_COLUMN].keys())[0], f"{list(metrics[AXIS_COLUMN].keys())[0]}_std"],
-            ),
-        ]
-        scores_list["algorithm"] = algorithm
-        scores_list = scores_list.reset_index().set_index(["main_category", "category", "algorithm"])
-
-        translated_scores = scores_template[scores_list.index].T
-        translated_scores.loc[scores_list.index] = scores_list[
-            [(targets[AXIS_COLUMN], algorithm, "test", list(metrics[AXIS_COLUMN].keys())[0])]
-        ]
-        scores_to_display[AXIS_COLUMN][scores_list.index] = translated_scores.T
-        translated_scores_std = scores_template[scores_list.index].T
-        translated_scores_std.loc[scores_list.index] = scores_list[
-            [(targets[AXIS_COLUMN], algorithm, "test", f"{list(metrics[AXIS_COLUMN].keys())[0]}_std")]
-        ]
-        scores_std_to_display[AXIS_COLUMN][scores_list.index] = translated_scores_std.T
+    scores_to_display[AXIS_COLUMN][indexes[AXIS_COLUMN]] = scores.loc[
+        indexes[AXIS_COLUMN], (target[AXIS_COLUMN], "test", list(metrics[AXIS_COLUMN].keys())[0])
+    ]
+    scores_std_to_display[AXIS_COLUMN][indexes[AXIS_COLUMN]] = scores.loc[
+        indexes[AXIS_COLUMN], (target[AXIS_COLUMN], "test", f"{list(metrics[AXIS_COLUMN].keys())[0]}_std")
+    ]
 
     customdata_list = [
         correlations_std_to_display,
@@ -313,9 +310,45 @@ def _fill_heatmap_residual_correlations(
         stacked_customdata, index=correlations_to_display.index, columns=correlations_to_display.columns
     )
 
-    correlations_to_display.rename(index=indexes_to_rename, columns=indexes_to_rename, inplace=True)
-    correlations_std_to_display.rename(index=indexes_to_rename, columns=indexes_to_rename, inplace=True)
-    customdata.rename(index=indexes_to_rename, columns=indexes_to_rename, inplace=True)
+    indexes_algorithms = {}
+    for key_axis in AXES:
+        if algorithms[key_axis] == ["best"]:
+            scores_grouped_by_categories = (
+                scores.loc[indexes[key_axis]].reset_index().groupby(by=["main_category", "category"])
+            )
+            best_algorithms = list(
+                map(
+                    lambda group: group[1]
+                    .set_index("algorithm")[(target[key_axis], "test", list(metrics[key_axis].keys())[0])]
+                    .idxmax(),
+                    scores_grouped_by_categories,
+                )
+            )
+            best_algorithms = pd.Series(best_algorithms).replace(np.nan, algorithms_to_look_at[key_axis][0])
+            indexes_algorithms[key_axis] = pd.MultiIndex.from_tuples(
+                list(
+                    np.dstack(
+                        (
+                            [indexes[key_axis].get_level_values("main_category").to_list()],
+                            [indexes[key_axis].get_level_values("category").to_list()],
+                            [best_algorithms.to_list()],
+                        )
+                    )[0]
+                ),
+                names=["main_category", "category", "algorithm"],
+            )
+        else:
+            indexes_algorithms[key_axis] = indexes[key_axis]
+
+    correlations_to_display = correlations_to_display.loc[indexes_algorithms[AXIS_ROW], indexes_algorithms[AXIS_COLUMN]]
+    correlations_std_to_display = correlations_std_to_display.loc[
+        indexes_algorithms[AXIS_ROW], indexes_algorithms[AXIS_COLUMN]
+    ]
+    customdata = customdata.loc[indexes_algorithms[AXIS_ROW], indexes_algorithms[AXIS_COLUMN]]
+
+    rename(correlations_to_display)
+    rename(correlations_std_to_display)
+    rename(customdata)
 
     fig = heatmap_by_sorted_index(correlations_to_display, hovertemplate, customdata)
 
