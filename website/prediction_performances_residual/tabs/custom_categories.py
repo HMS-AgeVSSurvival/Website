@@ -10,16 +10,16 @@ import numpy as np
 
 from website.utils.controls import get_item_radio_items, get_check_list, get_drop_down, get_options_from_dict
 from website.utils.rename import rename
-from website import TARGETS, MAIN_CATEGORIES, CATEGORIES, ALGORITHMS, FOLDS, SCORES, GRAPH_SIZE, DOWNLOAD_CONFIG
+from website import TARGETS, MAIN_CATEGORIES, CUSTOM_CATEGORIES, ALGORITHMS, FOLDS_RESIDUAL, SCORES, DOWNLOAD_CONFIG
 
 
-def get_controls_prediction_performances():
+def get_controls_prediction_performances_residual_custom_categories():
     return (
-        [get_check_list("targets_prediction_performances", TARGETS, "Target:")]
+        [get_check_list("targets_prediction_performances_residual_custom_categories", TARGETS, "Target:")]
         + [
             get_drop_down(
-                f"{main_category}_category_prediction_performances",
-                CATEGORIES[main_category],
+                f"{main_category}_category_prediction_performances_residual_custom_categories",
+                CUSTOM_CATEGORIES[main_category],
                 f"{MAIN_CATEGORIES[main_category]} category:",
                 multi=True,
                 clearable=True,
@@ -27,8 +27,10 @@ def get_controls_prediction_performances():
             for main_category in MAIN_CATEGORIES
         ]
         + [
-            get_check_list(f"algorithm_prediction_performances", ALGORITHMS, "Algorithm:"),
-            get_item_radio_items("metric_prediction_performances", SCORES[list(TARGETS.keys())[0]], "Target:"),
+            get_check_list(f"algorithm_prediction_performances_residual_custom_categories", ALGORITHMS, "Algorithm:"),
+            get_item_radio_items(
+                "metric_prediction_performances_residual_custom_categories", SCORES[list(TARGETS.keys())[0]], "Target:"
+            ),
         ]
     )
 
@@ -36,10 +38,10 @@ def get_controls_prediction_performances():
 for main_category in MAIN_CATEGORIES:
 
     @APP.callback(
-        Output(f"{main_category}_category_prediction_performances", "value"),
-        Input(f"{main_category}_category_prediction_performances", "value"),
+        Output(f"{main_category}_category_prediction_performances_residual_custom_categories", "value"),
+        Input(f"{main_category}_category_prediction_performances_residual_custom_categories", "value"),
     )
-    def update_categories_prediction_performances(categories):
+    def update_categories_prediction_performances_residual_custom_categories(categories):
         if "all" in categories and len(categories) > 1:
             categories.remove("all")
             return categories
@@ -48,10 +50,10 @@ for main_category in MAIN_CATEGORIES:
 
 
 @APP.callback(
-    Output("targets_prediction_performances", "value"),
-    Input(f"targets_prediction_performances", "value"),
+    Output("targets_prediction_performances_residual_custom_categories", "value"),
+    Input(f"targets_prediction_performances_residual_custom_categories", "value"),
 )
-def update_targets_prediction_performances(targets):
+def update_targets_prediction_performances_residual_custom_categories(targets):
     if "age" in targets and len(targets) > 1:
         if targets[-1] == "age":  # The last selected target was "age"
             return ["age"]
@@ -63,10 +65,13 @@ def update_targets_prediction_performances(targets):
 
 
 @APP.callback(
-    [Output("metric_prediction_performances", "options"), Output("metric_prediction_performances", "value")],
-    Input(f"targets_prediction_performances", "value"),
+    [
+        Output("metric_prediction_performances_residual_custom_categories", "options"),
+        Output("metric_prediction_performances_residual_custom_categories", "value"),
+    ],
+    Input(f"targets_prediction_performances_residual_custom_categories", "value"),
 )
-def update_metric_prediction_performances(targets):
+def update_metric_prediction_performances_residual_custom_categories(targets):
     if len(targets) > 0:
         return get_options_from_dict(SCORES[targets[0]]), list(SCORES[targets[0]].keys())[0]
     else:
@@ -74,9 +79,10 @@ def update_metric_prediction_performances(targets):
 
 
 @APP.callback(
-    Output("algorithm_prediction_performances", "value"), Input(f"algorithm_prediction_performances", "value")
+    Output("algorithm_prediction_performances_residual_custom_categories", "value"),
+    Input(f"algorithm_prediction_performances_residual_custom_categories", "value"),
 )
-def update_algorithms_prediction_performances(algorithms):
+def update_algorithms_prediction_performances_residual_custom_categories(algorithms):
     if "best" in algorithms and len(algorithms) > 1:
         if algorithms[-1] == "best":  # The last selected algorithm was "best"
             return ["best"]
@@ -89,20 +95,26 @@ def update_algorithms_prediction_performances(algorithms):
 
 @APP.callback(
     [
-        Output("title_test_prediction_performances", "children"),
-        Output("bars_test_prediction_performances", "figure"),
-        Output("title_train_prediction_performances", "children"),
-        Output("bars_train_prediction_performances", "figure"),
+        Output("title_test_prediction_performances_residual_custom_categories", "children"),
+        Output("bars_test_prediction_performances_residual_custom_categories", "figure"),
+        Output("title_train_prediction_performances_residual_custom_categories", "children"),
+        Output("bars_train_prediction_performances_residual_custom_categories", "figure"),
     ],
     [
-        Input("memory_prediction_performances", "data"),
-        Input("memory_information_prediction_performances", "data"),
-        Input("targets_prediction_performances", "value"),
+        Input("memory_prediction_performances_residual_custom_categories", "data"),
+        Input("memory_information_prediction_performances_residual_custom_categories", "data"),
+        Input("targets_prediction_performances_residual_custom_categories", "value"),
     ]
-    + [Input(f"{main_category}_category_prediction_performances", "value") for main_category in MAIN_CATEGORIES]
-    + [Input(f"algorithm_prediction_performances", "value"), Input(f"metric_prediction_performances", "value")],
+    + [
+        Input(f"{main_category}_category_prediction_performances_residual_custom_categories", "value")
+        for main_category in MAIN_CATEGORIES
+    ]
+    + [
+        Input(f"algorithm_prediction_performances_residual_custom_categories", "value"),
+        Input(f"metric_prediction_performances_residual_custom_categories", "value"),
+    ],
 )
-def _fill_bars_prediction_performances(
+def _fill_bars_prediction_performances_residual_custom_categories(
     scores_data,
     information_data,
     targets,
@@ -147,15 +159,17 @@ def _fill_bars_prediction_performances(
     for main_category in MAIN_CATEGORIES:
         if categories_to_display[main_category] == ["all"]:
             categories_to_display[main_category] = (
-                pd.Index(list(CATEGORIES[main_category].keys())).drop("all").to_list()
+                pd.Index(list(CUSTOM_CATEGORIES[main_category].keys())).drop("all").to_list()
             )
+        print("\n\n\n\n")
+        print(categories_to_display[main_category])
         list_indexes_to_take.extend(
             pd.MultiIndex.from_product(
                 ([main_category], categories_to_display[main_category], algorithms_to_look_at)
             ).to_list()
         )
     indexes_to_take = pd.MultiIndex.from_tuples(list_indexes_to_take, names=["main_category", "category", "algorithm"])
-    scores = scores_full.loc[indexes_to_take, (targets, list(FOLDS.keys()), [metric, f"{metric}_std"])]
+    scores = scores_full.loc[indexes_to_take, (targets, list(FOLDS_RESIDUAL.keys()), [metric, f"{metric}_std"])]
     information = information_full.loc[indexes_to_take.droplevel("algorithm").drop_duplicates(), targets]
 
     rename(scores, columns=False)
@@ -193,17 +207,17 @@ def _fill_bars_prediction_performances(
     figures = {}
     titles = {}
 
-    for fold in FOLDS:
+    for fold in FOLDS_RESIDUAL:
         scores_fold = scores.loc[:, (slice(None), fold)]
 
         if sum(scores_fold.notna().values.flatten()) == 0:
-            return f"{FOLDS[fold]} has no value to show", go.Figure(), "", go.Figure()
+            return f"{FOLDS_RESIDUAL[fold]} has no value to show", go.Figure(), "", go.Figure()
         if scores_fold.shape[0] > 1:
             titles[
                 fold
-            ] = f"{FOLDS[fold]}, average {SCORES[targets[0]][metric]} = {pd.Series(scores_fold.loc[:, (targets, fold, metric)].values.flatten()).mean().round(3)} +- {pd.Series(scores_fold.loc[:, (targets, fold, metric)].values.flatten()).std().round(3)}"
+            ] = f"{FOLDS_RESIDUAL[fold]}, average {SCORES[targets[0]][metric]} = {pd.Series(scores_fold.loc[:, (targets, fold, metric)].values.flatten()).mean().round(3)} +- {pd.Series(scores_fold.loc[:, (targets, fold, metric)].values.flatten()).std().round(3)}"
         else:
-            titles[fold] = FOLDS[fold]
+            titles[fold] = FOLDS_RESIDUAL[fold]
 
         x_positions = pd.Series(np.arange(5, 10 * len(information.index) + 5, 10), index=information.index)
 
@@ -274,45 +288,60 @@ def _fill_bars_prediction_performances(
     return titles["test"], figures["test"], titles["train"], figures["train"]
 
 
-LAYOUT = dbc.Container(
-    [
-        dcc.Loading(
-            [
-                dcc.Store(id="memory_prediction_performances", data=pd.read_feather(f"data/scores.feather").to_dict()),
-                dcc.Store(
-                    id="memory_information_prediction_performances",
-                    data=pd.read_feather(f"data/information.feather").to_dict(),
-                ),
-            ]
-        ),
-        html.H1("Prediction performances"),
-        html.Br(),
-        html.Br(),
-        dbc.Row(dbc.Col(dbc.Card(get_controls_prediction_performances()), width={"size": 4, "offset": 4})),
-        html.Br(),
-        html.Br(),
-        dbc.Col(
-            [
-                dcc.Loading(
-                    [
-                        html.H3(id="title_test_prediction_performances"),
-                        dcc.Graph(id="bars_test_prediction_performances", config=DOWNLOAD_CONFIG),
-                    ]
+def get_custom_categories():
+    return dbc.Container(
+        [
+            dcc.Loading(
+                [
+                    dcc.Store(
+                        id="memory_prediction_performances_residual_custom_categories",
+                        data=pd.read_feather(f"data/custom_categories/scores_residual.feather").to_dict(),
+                    ),
+                    dcc.Store(
+                        id="memory_information_prediction_performances_residual_custom_categories",
+                        data=pd.read_feather(f"data/custom_categories/information.feather").to_dict(),
+                    ),
+                ]
+            ),
+            html.H1("Prediction performances"),
+            html.Br(),
+            html.Br(),
+            dbc.Row(
+                dbc.Col(
+                    dbc.Card(get_controls_prediction_performances_residual_custom_categories()),
+                    width={"size": 4, "offset": 4},
                 )
-            ],
-            width={"offset": 2},
-        ),
-        dbc.Col(
-            [
-                dcc.Loading(
-                    [
-                        html.H3(id="title_train_prediction_performances"),
-                        dcc.Graph(id="bars_train_prediction_performances", config=DOWNLOAD_CONFIG),
-                    ]
-                )
-            ],
-            width={"offset": 2},
-        ),
-    ],
-    fluid=True,
-)
+            ),
+            html.Br(),
+            html.Br(),
+            dbc.Col(
+                [
+                    dcc.Loading(
+                        [
+                            html.H3(id="title_test_prediction_performances_residual_custom_categories"),
+                            dcc.Graph(
+                                id="bars_test_prediction_performances_residual_custom_categories",
+                                config=DOWNLOAD_CONFIG,
+                            ),
+                        ]
+                    )
+                ],
+                width={"offset": 2},
+            ),
+            dbc.Col(
+                [
+                    dcc.Loading(
+                        [
+                            html.H3(id="title_train_prediction_performances_residual_custom_categories"),
+                            dcc.Graph(
+                                id="bars_train_prediction_performances_residual_custom_categories",
+                                config=DOWNLOAD_CONFIG,
+                            ),
+                        ]
+                    )
+                ],
+                width={"offset": 2},
+            ),
+        ],
+        fluid=True,
+    )

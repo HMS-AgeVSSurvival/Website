@@ -1,4 +1,5 @@
 import pandas as pd
+from tqdm import tqdm
 
 from website import TARGETS, MAIN_CATEGORIES, ALGORITHMS
 from post_processing import RANDOM_STATES, RENAME_TARGETS
@@ -10,7 +11,7 @@ LIST_ALGORITHMS.remove("best")
 
 if __name__ == "__main__":
     list_new_information = []
-    for main_category in MAIN_CATEGORIES:
+    for main_category in tqdm(MAIN_CATEGORIES):
         results_0 = pd.read_excel(
             "data/Results.xlsx", f"{main_category} {RANDOM_STATES[0]}", header=[0, 1, 2], index_col=[0]
         )
@@ -39,4 +40,4 @@ if __name__ == "__main__":
         list_new_information, keys=MAIN_CATEGORIES.keys(), names=["main_category", "category"]
     )
     merged_new_information.columns = map(str, merged_new_information.columns.tolist())
-    merged_new_information.reset_index().to_feather("data/information.feather")
+    merged_new_information.reset_index().to_feather("data/all_categories/information.feather")

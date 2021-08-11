@@ -6,8 +6,9 @@ from dash.dependencies import Input, Output
 from website.app import APP
 
 import website.introduction as introduction
-import website.prediction_performances as prediction_performances
-import website.residual_correlations as residual_correlations
+import website.prediction_performances_residual.page as prediction_performances_residual
+
+# import website.residual_correlations as residual_correlations
 
 
 def get_server():
@@ -40,10 +41,10 @@ def get_top_bar():
                     dbc.NavItem(dbc.NavLink("Introduction", href="/", active=True, id="introduction")),
                     dbc.NavItem(
                         dbc.NavLink(
-                            "Prediction performances",
-                            href="/prediction_performances",
+                            "Prediction performances (residual)",
+                            href="/prediction_performances_residual",
                             active=True,
-                            id="prediction_performances",
+                            id="prediction_performances_residual",
                         )
                     ),
                     dbc.NavItem(
@@ -72,8 +73,8 @@ def get_top_bar():
 # THIS CALLBACK MAPS THE WEBSITE PAGE ORGANISATION TO THE CODE PAGE ORGANISATION
 @APP.callback(Output("page_content", "children"), Input("url", "pathname"))
 def _display_page(pathname):
-    if "prediction_performances" == pathname.split("/")[1]:
-        layout = prediction_performances.LAYOUT
+    if "prediction_performances_residual" == pathname.split("/")[1]:
+        layout = prediction_performances_residual.LAYOUT
 
     elif "residual_correlations" == pathname.split("/")[1]:
         layout = residual_correlations.LAYOUT
@@ -90,7 +91,7 @@ def _display_page(pathname):
 @APP.callback(
     [
         Output("introduction", "active"),
-        Output("prediction_performances", "active"),
+        Output("prediction_performances_residual", "active"),
         Output("residual_correlations", "active"),
     ],
     Input("url", "pathname"),
@@ -98,7 +99,7 @@ def _display_page(pathname):
 def _change_active_page(pathname):
     active_pages = [False] * 3
 
-    if "prediction_performances" == pathname.split("/")[1]:
+    if "prediction_performances_residual" == pathname.split("/")[1]:
         active_pages[1] = True
 
     elif "residual_correlations" == pathname.split("/")[1]:

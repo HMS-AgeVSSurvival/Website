@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from tqdm import tqdm
 
 from website import MAIN_CATEGORIES, TARGETS, ALGORITHMS, FOLDS
 from post_processing import RANDOM_STATES, RENAME_TARGETS, SCORES
@@ -11,7 +12,7 @@ LIST_ALGORITHMS.remove("best")
 
 if __name__ == "__main__":
     list_new_scores = []
-    for main_category in MAIN_CATEGORIES:
+    for main_category in tqdm(MAIN_CATEGORIES):
         results_0 = pd.read_excel(
             "data/Results.xlsx", f"{main_category} {RANDOM_STATES[0]}", header=[0, 1, 2], index_col=[0]
         )
@@ -93,6 +94,8 @@ if __name__ == "__main__":
                             )
         list_new_scores.append(new_scores)
 
-    merged_new_scores = pd.concat(list_new_scores, keys=MAIN_CATEGORIES.keys(), names=["main_category", "category", "algorithm"])
+    merged_new_scores = pd.concat(
+        list_new_scores, keys=MAIN_CATEGORIES.keys(), names=["main_category", "category", "algorithm"]
+    )
     merged_new_scores.columns = map(str, merged_new_scores.columns.tolist())
-    merged_new_scores.reset_index().to_feather("data/scores.feather")
+    merged_new_scores.reset_index().to_feather("data/all_categories/scores_residual.feather")
