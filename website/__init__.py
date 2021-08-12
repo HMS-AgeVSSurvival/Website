@@ -39,6 +39,40 @@ CUSTOM_CATEGORIES_INDEX = pd.MultiIndex.from_tuples(
 )
 
 
+def create_dictionaries(main_category, list_categories):
+    dict_categories = dict(
+        zip(
+            list_categories,
+            list(map(lambda cat: cat.replace("_or_", "/").replace("__", " ").replace("--", "."), list_categories)),
+        )
+    )
+    sorted_dict_categories = {"all": "All"}
+    sorted_dict_categories.update(sorted(dict_categories.items()))
+    main_category_categories = collections.OrderedDict(sorted_dict_categories)
+
+    list_custom_categories = (
+        CUSTOM_CATEGORIES_INDEX[CUSTOM_CATEGORIES_INDEX.get_level_values("main_category") == main_category]
+        .get_level_values("category")
+        .to_list()
+    )
+    dict_custom_categories = dict(
+        zip(
+            list_custom_categories,
+            list(
+                map(
+                    lambda cat: cat.replace("_or_", "/").replace("__", " ").replace("--", "."),
+                    list_custom_categories,
+                )
+            ),
+        )
+    )
+    sorted_dict_custom_categories = {"all": "All"}
+    sorted_dict_custom_categories.update(sorted(dict_custom_categories.items()))
+    main_category_custom_categories = collections.OrderedDict(sorted_dict_custom_categories)
+
+    return main_category_categories, main_category_custom_categories
+
+
 METHODS = {"pearson": "Pearson", "spearman": "Spearman"}
 
 TARGETS = {"age": "Age", "all": "Survival all", "cvd": "Survival CVD", "cancer": "Survival cancer"}
@@ -89,37 +123,7 @@ LIST_EXAMINATION_CATEGORIES = [
     "Dual-Energy__X-ray__Absorptiometry__-__Abdominal__Aortic__Calcification",
     "Tuberculosis",
 ]
-DICT_EXAMINATION_CATEGORIES = dict(
-    zip(
-        LIST_EXAMINATION_CATEGORIES,
-        list(
-            map(lambda cat: cat.replace("_or_", "/").replace("__", " ").replace("--", "."), LIST_EXAMINATION_CATEGORIES)
-        ),
-    )
-)
-SORTED_DICT_EXAMINATION_CATEGORIES = {"all": "All"}
-SORTED_DICT_EXAMINATION_CATEGORIES.update(sorted(DICT_EXAMINATION_CATEGORIES.items()))
-EXAMINATION_CATEGORIES = collections.OrderedDict(SORTED_DICT_EXAMINATION_CATEGORIES)
-
-LIST_EXAMINATION_CUSTOM_CATEGORIES = (
-    CUSTOM_CATEGORIES_INDEX[CUSTOM_CATEGORIES_INDEX.get_level_values("main_category") == "examination"]
-    .get_level_values("category")
-    .to_list()
-)
-DICT_EXAMINATION_CUSTOM_CATEGORIES = dict(
-    zip(
-        LIST_EXAMINATION_CUSTOM_CATEGORIES,
-        list(
-            map(
-                lambda cat: cat.replace("_or_", "/").replace("__", " ").replace("--", "."),
-                LIST_EXAMINATION_CUSTOM_CATEGORIES,
-            )
-        ),
-    )
-)
-SORTED_DICT_EXAMINATION_CUSTOM_CATEGORIES = {"all": "All"}
-SORTED_DICT_EXAMINATION_CUSTOM_CATEGORIES.update(sorted(DICT_EXAMINATION_CUSTOM_CATEGORIES.items()))
-EXAMINATION_CUSTOM_CATEGORIES = collections.OrderedDict(SORTED_DICT_EXAMINATION_CUSTOM_CATEGORIES)
+EXAMINATION_CATEGORIES, EXAMINATION_CUSTOM_CATEGORIES = create_dictionaries("examination", LIST_EXAMINATION_CATEGORIES)
 
 
 LIST_LABORATORY_CATEGORIES = [
@@ -317,37 +321,7 @@ LIST_LABORATORY_CATEGORIES = [
     "Aromatic__Amines__-__Urine",
     "Ferritin",
 ]
-DICT_LABORATORY_CATEGORIES = dict(
-    zip(
-        LIST_LABORATORY_CATEGORIES,
-        list(
-            map(lambda cat: cat.replace("_or_", "/").replace("__", " ").replace("--", "."), LIST_LABORATORY_CATEGORIES)
-        ),
-    )
-)
-SORTED_DICT_LABORATORY_CATEGORIES = {"all": "All"}
-SORTED_DICT_LABORATORY_CATEGORIES.update(sorted(DICT_LABORATORY_CATEGORIES.items()))
-LABORATORY_CATEGORIES = collections.OrderedDict(SORTED_DICT_LABORATORY_CATEGORIES)
-
-LIST_LABORATORY_CUSTOM_CATEGORIES = (
-    CUSTOM_CATEGORIES_INDEX[CUSTOM_CATEGORIES_INDEX.get_level_values("main_category") == "laboratory"]
-    .get_level_values("category")
-    .to_list()
-)
-DICT_LABORATORY_CUSTOM_CATEGORIES = dict(
-    zip(
-        LIST_LABORATORY_CUSTOM_CATEGORIES,
-        list(
-            map(
-                lambda cat: cat.replace("_or_", "/").replace("__", " ").replace("--", "."),
-                LIST_LABORATORY_CUSTOM_CATEGORIES,
-            )
-        ),
-    )
-)
-SORTED_DICT_LABORATORY_CUSTOM_CATEGORIES = {"all": "All"}
-SORTED_DICT_LABORATORY_CUSTOM_CATEGORIES.update(sorted(DICT_LABORATORY_CUSTOM_CATEGORIES.items()))
-LABORATORY_CUSTOM_CATEGORIES = collections.OrderedDict(SORTED_DICT_LABORATORY_CUSTOM_CATEGORIES)
+LABORATORY_CATEGORIES, LABORATORY_CUSTOM_CATEGORIES = create_dictionaries("laboratory", LIST_LABORATORY_CATEGORIES)
 
 
 LIST_QUESTIONNAIRE_CATEGORIES = [
@@ -420,40 +394,9 @@ LIST_QUESTIONNAIRE_CATEGORIES = [
     "Kidney__Conditions",
     "Tuberculosis",
 ]
-DICT_QUESTIONNAIRE_CATEGORIES = dict(
-    zip(
-        LIST_QUESTIONNAIRE_CATEGORIES,
-        list(
-            map(
-                lambda cat: cat.replace("_or_", "/").replace("__", " ").replace("--", "."),
-                LIST_QUESTIONNAIRE_CATEGORIES,
-            )
-        ),
-    )
+QUESTIONNAIRE_CATEGORIES, QUESTIONNAIRE_CUSTOM_CATEGORIES = create_dictionaries(
+    "questionnaire", LIST_QUESTIONNAIRE_CATEGORIES
 )
-SORTED_DICT_QUESTIONNAIRE_CATEGORIES = {"all": "All"}
-SORTED_DICT_QUESTIONNAIRE_CATEGORIES.update(sorted(DICT_QUESTIONNAIRE_CATEGORIES.items()))
-QUESTIONNAIRE_CATEGORIES = collections.OrderedDict(SORTED_DICT_QUESTIONNAIRE_CATEGORIES)
-
-LIST_QUESTIONNAIRE_CUSTOM_CATEGORIES = (
-    CUSTOM_CATEGORIES_INDEX[CUSTOM_CATEGORIES_INDEX.get_level_values("main_category") == "questionnaire"]
-    .get_level_values("category")
-    .to_list()
-)
-DICT_QUESTIONNAIRE_CUSTOM_CATEGORIES = dict(
-    zip(
-        LIST_QUESTIONNAIRE_CUSTOM_CATEGORIES,
-        list(
-            map(
-                lambda cat: cat.replace("_or_", "/").replace("__", " ").replace("--", "."),
-                LIST_QUESTIONNAIRE_CUSTOM_CATEGORIES,
-            )
-        ),
-    )
-)
-SORTED_DICT_QUESTIONNAIRE_CUSTOM_CATEGORIES = {"all": "All"}
-SORTED_DICT_QUESTIONNAIRE_CUSTOM_CATEGORIES.update(sorted(DICT_QUESTIONNAIRE_CUSTOM_CATEGORIES.items()))
-QUESTIONNAIRE_CUSTOM_CATEGORIES = collections.OrderedDict(SORTED_DICT_QUESTIONNAIRE_CUSTOM_CATEGORIES)
 
 
 CATEGORIES = {
@@ -479,14 +422,21 @@ MAX_LENGTH_CATEGORY = 25
 DOWNLOAD_CONFIG = {"toImageButtonOptions": {"format": "svg"}}
 
 FOLDS_RESIDUAL = {
-    "train": "Trainning",
-    "test": "Testing",
+    "train": "Metrics on the training set",
+    "test": "Metrics on the testing set",
 }
+FOLDS_FEATURE_IMPORTANCES = {"train": "Metrics on the training set"}
 
 SCORES_SURVIVAL = {"c_index": "C-index", "diff_c_index": "Difference C-index"}
-SCORES = {
+SCORES_RESIDUAL = {
     "age": {"r2": "R²", "rmse": "RMSE"},
     "all": SCORES_SURVIVAL,
     "cvd": SCORES_SURVIVAL,
     "cancer": SCORES_SURVIVAL,
+}
+SCORES_FEATURE_IMPORTANCES = {
+    "age": {"r2": "R²", "rmse": "RMSE"},
+    "all": {"c_index": "C-index"},
+    "cvd": {"c_index": "C-index"},
+    "cancer": {"c_index": "C-index"},
 }
