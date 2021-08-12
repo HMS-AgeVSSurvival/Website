@@ -44,8 +44,8 @@ for main_category in MAIN_CATEGORIES:
         Output(f"{main_category}_category_prediction_performances_feature_importances_custom_categories", "value"),
         Input(f"{main_category}_category_prediction_performances_feature_importances_custom_categories", "value"),
     )
-    def update_categories_prediction_performances_feature_importances_custom_categories(categories):
-        if "all" in categories and len(categories) > 1:
+    def _update_categories_prediction_performances_feature_importances_custom_categories(categories):
+        if "all" in categories and len(categories) > 1:  # The last selected category was "all"
             if categories[-1] == "all":
                 return ["all"]
             else:
@@ -59,7 +59,7 @@ for main_category in MAIN_CATEGORIES:
     Output("targets_prediction_performances_feature_importances_custom_categories", "value"),
     Input(f"targets_prediction_performances_feature_importances_custom_categories", "value"),
 )
-def update_targets_prediction_performances_feature_importances_custom_categories(targets):
+def _update_targets_prediction_performances_feature_importances_custom_categories(targets):
     if "age" in targets and len(targets) > 1:
         if targets[-1] == "age":  # The last selected target was "age"
             return ["age"]

@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 from website.utils.rename import rename
-from website import TARGETS, MAIN_CATEGORIES, ALGORITHMS, FOLDS_RESIDUAL, SCORES_RESIDUAL
+from website import TARGETS, MAIN_CATEGORIES, ALGORITHMS, FOLDS_RESIDUAL, SCORES_RESIDUAL, TOO_MANY_CATEGORIES
 
 
 def plot_scores(
@@ -64,7 +64,7 @@ def plot_scores(
             ).to_list()
         )
     indexes_to_take = pd.MultiIndex.from_tuples(list_indexes_to_take, names=["main_category", "category", "algorithm"])
-    if not custom_categories and len(indexes_to_take.droplevel("algorithm").drop_duplicates()) > 70:
+    if not custom_categories and len(indexes_to_take.droplevel("algorithm").drop_duplicates()) > TOO_MANY_CATEGORIES:
         return (
             "Please select less categories, the time required to load the graphs is going to be too long...",
             go.Figure(),

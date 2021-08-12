@@ -6,10 +6,11 @@ from dash.dependencies import Input, Output
 from website.app import APP
 
 import website.introduction as introduction
+
 import website.prediction_performances_residual.page as prediction_performances_residual
 import website.prediction_performances_feature_importances.page as prediction_performances_feature_importances
 
-# import website.residual_correlations as residual_correlations
+import website.residual_correlations.page as residual_correlations
 
 
 def get_server():

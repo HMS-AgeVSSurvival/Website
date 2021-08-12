@@ -418,6 +418,7 @@ AXIS_ROW, AXIS_COLUMN = list(AXES.keys())
 
 GRAPH_SIZE = 1200
 MAX_LENGTH_CATEGORY = 25
+TOO_MANY_CATEGORIES = 70
 
 DOWNLOAD_CONFIG = {"toImageButtonOptions": {"format": "svg"}}
 
