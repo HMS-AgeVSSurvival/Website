@@ -9,6 +9,7 @@ import os
 import pandas as pd
 
 from website.utils.controls import get_item_radio_items, get_check_list, get_drop_down
+from website.utils.aws_loader import load_feather
 from website.residual_correlations.tabs.share_plotter import plot_heatmap
 from website import (
     METHODS,
@@ -42,14 +43,12 @@ def get_std_residual_correlations_custom_categories(method, target_row, target_c
 
 
 def load_correlations(method, target_row, target_column, std_path=""):
-    path_to_fetch = (
-        f"data/custom_categories/correlation/residual/{method}{std_path}_{target_row}_{target_column}.feather"
-    )
+    path_to_fetch = f"custom_categories/correlation/residual/{method}{std_path}_{target_row}_{target_column}.feather"
     if os.path.exists(path_to_fetch):
-        return pd.read_feather(path_to_fetch).to_dict()
+        return load_feather(path_to_fetch).to_dict()
     else:
-        correlations = pd.read_feather(
-            f"data/custom_categories/correlation/residual/{method}{std_path}_{target_column}_{target_row}.feather"
+        correlations = load_feather(
+            f"custom_categories/correlation/residual/{method}{std_path}_{target_column}_{target_row}.feather"
         ).set_index(["main_category", "category", "algorithm"])
         correlations.columns = pd.MultiIndex.from_tuples(
             list(map(eval, correlations.columns.tolist())), names=["main_category", "category", "algorithm"]
@@ -65,14 +64,12 @@ def load_correlations(method, target_row, target_column, std_path=""):
     [Input(f"target_{key_axis}_residual_correlations_custom_categories", "value") for key_axis in AXES],
 )
 def get_number_partitipants_residual_correlations_custom_categories(target_row, target_column):
-    path_to_fetch = (
-        f"data/custom_categories/correlation/residual/number_participants_{target_row}_{target_column}.feather"
-    )
+    path_to_fetch = f"custom_categories/correlation/residual/number_participants_{target_row}_{target_column}.feather"
     if os.path.exists(path_to_fetch):
-        return pd.read_feather(path_to_fetch).to_dict()
+        return load_feather(path_to_fetch).to_dict()
     else:
-        number_participants = pd.read_feather(
-            f"data/custom_categories/correlation/residual/number_participants_{target_column}_{target_row}.feather"
+        number_participants = load_feather(
+            f"custom_categories/correlation/residual/number_participants_{target_column}_{target_row}.feather"
         ).set_index(["main_category", "category"])
         number_participants.columns = pd.MultiIndex.from_tuples(
             list(map(eval, number_participants.columns.tolist())), names=["main_category", "category"]
@@ -179,7 +176,7 @@ def get_custom_categories():
                     dcc.Store(id="memory_number_participants_residual_correlations_custom_categories"),
                     dcc.Store(
                         id="memory_scores_residual_correlations_custom_categories",
-                        data=pd.read_feather("data/custom_categories/scores_residual.feather").to_dict(),
+                        data=load_feather("custom_categories/scores_residual.feather").to_dict(),
                     ),
                 ]
             ),
