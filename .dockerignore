@@ -1,0 +1,15 @@
+__pycache__/
+env*/
+*.egg-info/
+.devcontainer
+.vscode
+.gitignore
+.dockerignore
+.github
+README.md
+Dockerfile
+LICENSE
+
+# Local specific
+/data
+/post_processing

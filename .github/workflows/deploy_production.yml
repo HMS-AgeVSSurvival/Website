@@ -1,0 +1,56 @@
+name: Deployment for production
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  deploy_app_in_prod:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Get the AWS credentials from Google Secret Manager
+        id: gcp_secrets
+        uses: google-github-actions/get-secretmanager-secrets@main
+        with:
+          credentials: ${{ secrets.GCP_SA_KEY }}
+          secrets: |-
+            AWS_ACCESS_KEY_ID:${{ secrets.GCP_PROJECT_ID }}/AWS_ACCESS_KEY_ID
+            AWS_SECRET_ACCESS_KEY:${{ secrets.GCP_PROJECT_ID }}/AWS_SECRET_ACCESS_KEY
+      
+      - name: Download favicon.ico from AWS
+        uses: prewk/s3-cp-action@v2
+        with:
+          aws_access_key_id: ${{ steps.gcp_secrets.outputs.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ steps.gcp_secrets.outputs.AWS_SECRET_ACCESS_KEY }}
+          source: 's3://age-vs-survival/favicon.ico'
+          dest: './data/'
+    
+      - name: Build docker image
+        run: docker build -t local_gcr.io/agevssurvival-317113/website:prod .
+
+      - name: Push the docker image to Google Container Registry
+        uses: mattes/gce-docker-push-action@v1
+        with:
+          creds: ${{ secrets.GCP_SA_KEY }}
+          src: local_gcr.io/agevssurvival-317113/website:prod
+          dst: gcr.io/agevssurvival-317113/website:prod
+
+      # - name: Deploy on cloud Run
+      #   uses: google-github-actions/deploy-cloudrun@main
+      #   with:
+      #     credentials: ${{ secrets.GCP_SA_KEY }}
+      #     service: website
+      #     image: gcr.io/agevssurvival-317113/website:prod
+      #     tag: prod
+      #     flags: --concurrency=60 --cpu=1 --min-instances=0 --max-instances=100 --memory=2Gi --platform=managed --allow-unauthenticated
+              
+      # - name: Manage traffic
+      #   uses: google-github-actions/deploy-cloudrun@main
+      #   with:
+      #     credentials: ${{ secrets.GCP_SA_KEY }}
+      #     service: website
+      #     image: gcr.io/agevssurvival-317113/website:prod
+      #     tag_traffic: prod=100,dev=0
