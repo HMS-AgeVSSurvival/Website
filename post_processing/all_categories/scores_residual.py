@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 
-from website import MAIN_CATEGORIES, TARGETS, ALGORITHMS, FOLDS
-from post_processing import RANDOM_STATES, RENAME_TARGETS, SCORES
+from website import FOLDS_FEATURE_IMPORTANCES, MAIN_CATEGORIES, TARGETS, ALGORITHMS, FOLDS_RESIDUAL
+from post_processing import RANDOM_STATES, RENAME_TARGETS_RESIDUAL, SCORES
 
 
 LIST_ALGORITHMS = list(ALGORITHMS.keys())
@@ -27,7 +27,7 @@ if __name__ == "__main__":
         )
 
         for target in TARGETS:
-            name_target = RENAME_TARGETS[target]
+            name_target = RENAME_TARGETS_RESIDUAL[target]
             for algorithm in LIST_ALGORITHMS:
                 for score in SCORES[target]:
                     name_score = SCORES[target][score]
@@ -38,7 +38,7 @@ if __name__ == "__main__":
                         idx_best_0 = results_0.index[comparison.T.idxmax() == RANDOM_STATES[0]].to_list()
                         idx_best_1 = results_1.index[comparison.T.idxmax() == RANDOM_STATES[1]].to_list()
 
-                        for fold in FOLDS:
+                        for fold in FOLDS_RESIDUAL:
                             new_scores.loc[(idx_best_0, algorithm), (target, fold, score)] = results_0.loc[
                                 idx_best_0, (name_target, algorithm, f"{fold} {name_score}")
                             ].values
@@ -62,7 +62,7 @@ if __name__ == "__main__":
                         idx_best_0 = results_0.index[comparison.T.idxmax() == RANDOM_STATES[0]]
                         idx_best_1 = results_1.index[comparison.T.idxmax() == RANDOM_STATES[1]]
 
-                        for fold in FOLDS:
+                        for fold in FOLDS_FEATURE_IMPORTANCES:
                             new_scores.loc[(idx_best_0, algorithm), (target, fold, score)] = (
                                 new_scores.loc[(idx_best_0, algorithm), (target, fold, "c_index")].values
                                 - results_0.loc[

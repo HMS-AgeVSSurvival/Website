@@ -4,22 +4,41 @@ from website import CUSTOM_CATEGORIES_INDEX
 
 
 if __name__ == "__main__":
-    scores = pd.DataFrame(pd.read_feather("data/all_categories/scores_residual.feather")).set_index(
+    scores_residual = pd.DataFrame(pd.read_feather("data/all_categories/scores_residual.feather")).set_index(
         ["main_category", "category", "algorithm"]
     )
-    scores.columns = pd.MultiIndex.from_tuples(
-        list(map(eval, scores.columns.tolist())), names=["target", "fold", "metric"]
+    scores_residual.columns = pd.MultiIndex.from_tuples(
+        list(map(eval, scores_residual.columns.tolist())), names=["target", "fold", "metric"]
     )
 
-    custom_scores = scores.loc[
+    custom_scores_residual = scores_residual.loc[
         (
             CUSTOM_CATEGORIES_INDEX.get_level_values("main_category"),
             CUSTOM_CATEGORIES_INDEX.get_level_values("category"),
         ),
         :,
     ]
-    custom_scores.columns = map(str, custom_scores.columns.tolist())
-    custom_scores.reset_index().to_feather("data/custom_categories/scores_residual.feather")
+    custom_scores_residual.columns = map(str, custom_scores_residual.columns.tolist())
+    custom_scores_residual.reset_index().to_feather("data/custom_categories/scores_residual.feather")
+
+    scores_feature_importances = pd.DataFrame(
+        pd.read_feather("data/all_categories/scores_feature_importances.feather")
+    ).set_index(["main_category", "category", "algorithm"])
+    scores_feature_importances.columns = pd.MultiIndex.from_tuples(
+        list(map(eval, scores_feature_importances.columns.tolist())), names=["target", "fold", "metric"]
+    )
+
+    custom_scores_feature_importances = scores_feature_importances.loc[
+        (
+            CUSTOM_CATEGORIES_INDEX.get_level_values("main_category"),
+            CUSTOM_CATEGORIES_INDEX.get_level_values("category"),
+        ),
+        :,
+    ]
+    custom_scores_feature_importances.columns = map(str, custom_scores_feature_importances.columns.tolist())
+    custom_scores_feature_importances.reset_index().to_feather(
+        "data/custom_categories/scores_feature_importances.feather"
+    )
 
     information = pd.DataFrame(pd.read_feather(f"data/all_categories/information.feather")).set_index(
         ["main_category", "category"]
