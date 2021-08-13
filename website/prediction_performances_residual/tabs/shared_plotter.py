@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from website.utils.rename import rename
+from website.utils.rename import rename, rename_index
 from website import TARGETS, MAIN_CATEGORIES, ALGORITHMS, FOLDS_RESIDUAL, SCORES_RESIDUAL, TOO_MANY_CATEGORIES
 
 
@@ -30,15 +30,6 @@ def plot_scores(
         return "Please select a category", go.Figure(), "", go.Figure()
     elif len(algorithms) == 0:
         return "Please select an algorithm", go.Figure(), "", go.Figure()
-
-    scores_full = pd.DataFrame(scores_data).set_index(["main_category", "category", "algorithm"])
-    scores_full.columns = pd.MultiIndex.from_tuples(
-        list(map(eval, scores_full.columns.tolist())), names=["target", "fold", "metric"]
-    )
-    information_full = pd.DataFrame(information_data).set_index(["main_category", "category"])
-    information_full.columns = pd.MultiIndex.from_tuples(
-        list(map(eval, information_full.columns.tolist())), names=["target", "information", "detail"]
-    )
 
     categories_to_display = {
         "examination": examination_categories,
@@ -71,15 +62,20 @@ def plot_scores(
             "",
             go.Figure(),
         )
-    scores = scores_full.loc[indexes_to_take, (targets, list(FOLDS_RESIDUAL.keys()), [metric, f"{metric}_std"])]
-    information = information_full.loc[indexes_to_take.droplevel("algorithm").drop_duplicates(), targets]
-
-    rename(scores, columns=False, custom_categories=custom_categories)
-    rename(information, algorithm=False, columns=False, custom_categories=custom_categories)
+    scores = pd.DataFrame(scores_data).set_index(["main_category", "category", "algorithm"])
+    scores.columns = pd.MultiIndex.from_tuples(
+        list(map(eval, scores.columns.tolist())), names=["target", "fold", "metric"]
+    )
+    information = pd.DataFrame(information_data).set_index(["main_category", "category"])
+    information.columns = pd.MultiIndex.from_tuples(
+        list(map(eval, information.columns.tolist())), names=["target", "information", "detail"]
+    )
 
     indexes_target_best_algorithms = {}
     if algorithms == ["best"]:
-        scores_grouped_by_categories = scores.reset_index().groupby(by=["main_category", "category"])
+        scores_grouped_by_categories = (
+            scores.loc[indexes_to_take].reset_index().groupby(by=["main_category", "category"])
+        )
 
         for target in targets:
             best_algorithms = list(
@@ -88,8 +84,8 @@ def plot_scores(
                     scores_grouped_by_categories,
                 )
             )
-            best_algorithms = pd.Series(best_algorithms).replace(np.nan, ALGORITHMS[algorithms_to_look_at[0]])
-            indexes_target_best_algorithms[target] = pd.MultiIndex.from_tuples(
+            best_algorithms = pd.Series(best_algorithms).replace(np.nan, algorithms_to_look_at[0])
+            indexes_target_best_algorithms[target] = rename_index(pd.MultiIndex.from_tuples(
                 list(
                     zip(
                         information.index.get_level_values("main_category").to_list(),
@@ -98,17 +94,19 @@ def plot_scores(
                     )
                 ),
                 names=["main_category", "category", "algorithm"],
-            )
+            ), custom_categories=custom_categories)
 
-    if targets != ["age"]:
-        scores.replace(-1, np.nan, inplace=True)
+    rename(scores, columns=False, custom_categories=custom_categories)
+    rename(information, algorithm=False, columns=False, custom_categories=custom_categories)
+    indexes_to_take = rename_index(indexes_to_take, custom_categories=custom_categories)
+
     hovertemplate = "%{x},<Br> score: %{y:.3f} +- %{customdata[0]:.3f}, %{customdata[1]} participants with %{customdata[2]} variables, age range %{customdata[3]} to %{customdata[4]} years old <extra>%{customdata[5]}</extra>"
 
     figures = {}
     titles = {}
 
     for fold in FOLDS_RESIDUAL:
-        scores_fold = scores.loc[:, (slice(None), fold)]
+        scores_fold = scores.loc[indexes_to_take, (slice(None), fold)]
 
         if sum(scores_fold.notna().values.flatten()) == 0:
             return f"{FOLDS_RESIDUAL[fold]} has no value to show", go.Figure(), "", go.Figure()
