@@ -57,5 +57,6 @@ if __name__ == "__main__":
     merged_new_scores = pd.concat(
         list_new_scores, keys=MAIN_CATEGORIES.keys(), names=["main_category", "category", "algorithm"]
     )
+    merged_new_scores.replace(-1, np.nan, inplace=True)
     merged_new_scores.columns = map(str, merged_new_scores.columns.tolist())
     merged_new_scores.reset_index().to_feather("data/all_categories/scores_feature_importances.feather")
