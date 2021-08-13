@@ -1,5 +1,6 @@
 import dash
 import dash_bootstrap_components as dbc
+import dash_auth
 
 APP = dash.Dash(
     name=__name__,
@@ -8,6 +9,8 @@ APP = dash.Dash(
     assets_folder="../data",  # from __name__
     title="Age VS Survival",
 )
+
+dash_auth.BasicAuth(APP, {"alan": "legoallec", "chirag": "patel", "theo": "vincent"})
 
 APP.config.suppress_callback_exceptions = True
 

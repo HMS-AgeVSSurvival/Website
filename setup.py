@@ -1,4 +1,3 @@
-
 from setuptools import setup, find_packages
 
 setup(
@@ -14,6 +13,7 @@ setup(
         "dash_html_components",
         "dash-gif-component",
         "dash_table",
+        "dash-auth",
         "dash",
         "sklearn",
         "numpy",
