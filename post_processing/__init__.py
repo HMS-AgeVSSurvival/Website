@@ -22,7 +22,7 @@ ALGORITHMS = ["elastic_net", "light_gbm"]
 ALGORITHMS_ALGORITHMS = [
     f"{algorithm_1} vs {algorithm_2}"
     for idx_algorithm, algorithm_1 in enumerate(ALGORITHMS)
-    for algorithm_2 in TARGETS[idx_algorithm:]
+    for algorithm_2 in ALGORITHMS[idx_algorithm:]
 ]
 
 SCORES_SURVIVAL = {"c_index": "C-index", "diff_c_index": "Difference C-index"}
