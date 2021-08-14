@@ -1,10 +1,22 @@
 import pandas as pd
 
-from website import MAIN_CATEGORIES, CATEGORIES, CUSTOM_CATEGORIES, ALGORITHMS
+from website import TARGETS, MAIN_CATEGORIES, CATEGORIES, CUSTOM_CATEGORIES, ALGORITHMS
 
 
-def rename(data, main_category=True, category=True, algorithm=True, index=True, columns=True, custom_categories=True):
+def rename(
+    data,
+    target=False,
+    main_category=True,
+    category=True,
+    algorithm=True,
+    index=True,
+    columns=True,
+    custom_categories=True,
+):
     if index:
+        if target:
+            data.rename(index=TARGETS, level="target", inplace=True)
+
         if main_category:
             data.rename(index=MAIN_CATEGORIES, level="main_category", inplace=True)
 
@@ -18,6 +30,9 @@ def rename(data, main_category=True, category=True, algorithm=True, index=True, 
         if algorithm:
             data.rename(index=ALGORITHMS, level="algorithm", inplace=True)
     if columns:
+        if target:
+            data.rename(columns=TARGETS, level="target", inplace=True)
+
         if main_category:
             data.rename(columns=MAIN_CATEGORIES, level="main_category", inplace=True)
 
@@ -33,10 +48,13 @@ def rename(data, main_category=True, category=True, algorithm=True, index=True, 
 
 
 def rename_index(
-    indexes, main_category=True, category=True, algorithm=True, index=True, columns=True, custom_categories=True
+    indexes, target=False, main_category=True, category=True, algorithm=True, index=True, columns=True, custom_categories=True
 ):
     data = pd.DataFrame(None, index=indexes)
 
+    if target:
+        data.rename(index=TARGETS, level="target", inplace=True)
+        
     if main_category:
         data.rename(index=MAIN_CATEGORIES, level="main_category", inplace=True)
 
