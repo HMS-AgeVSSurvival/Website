@@ -23,7 +23,7 @@ if __name__ == "__main__":
         new_scores = pd.DataFrame(
             None,
             index=results_0.index,
-            columns=pd.MultiIndex.from_tuples([("age", "algorithm", "train", "r2")]),
+            columns=pd.MultiIndex.from_tuples([("age", list(ALGORITHMS.keys())[0], "train", "r2")]),
         )
 
         for target in TARGETS:
