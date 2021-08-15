@@ -108,7 +108,7 @@ def plot_scores(
                         scores.loc[:, (TARGETS[target], slice(None), "test", metric)]
                         .droplevel(["target", "fold", "metric"], axis=1)
                         .idxmax(axis=1)
-                    ).replace(np.nan, list(ALGORITHMS.keys())[0])
+                    ).replace(np.nan, list(ALGORITHMS.values())[0])
                     main_categories_categories_best_algorithms = best_algorithms.reset_index().apply(
                         lambda x: tuple(x), axis=1
                     )
