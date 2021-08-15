@@ -46,6 +46,7 @@ def get_controls_feature_importances_correlations_between_algorithms_custom_cate
                 f"{MAIN_CATEGORIES[main_category]} category:",
                 multi=True,
                 clearable=True,
+                value=["all"] if main_category != "laboratory" else [],
             )
             for main_category in MAIN_CATEGORIES
         ]

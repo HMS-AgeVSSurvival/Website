@@ -91,9 +91,7 @@ def plot_feature_importances_correlations(
             + ": %{customdata[3]:.3f} +- %{customdata[4]:.3f}<Br> %{customdata[5]:.3f} participants with %{customdata[6]} variables, age range %{customdata[7]} to %{customdata[8]} years old <extra>%{customdata[9]}</extra>"
         )
 
-    correlations_to_take = correlations.loc[
-        indexes_to_take, (f"{algorithm_a} vs age", "correlation")
-    ]  # Replace age with alogithm_b
+    correlations_to_take = correlations.loc[indexes_to_take, (f"{algorithm_a} vs {algorithm_b}", "correlation")]
 
     if sum(correlations_to_take.notna().values.flatten()) == 0:
         return f"There is no value to show", go.Figure()
@@ -114,12 +112,13 @@ def plot_feature_importances_correlations(
 
     for target in targets:
         metric = list(SCORES_FEATURE_IMPORTANCES[target].keys())[0]
+        indexes_to_take_target = indexes_to_take[indexes_to_take.get_level_values("target") == target]
         if algorithm_a == algorithm_b:
             customdata = np.dstack(
                 (
-                    correlations_to_take[(f"{algorithm_a} vs {target}", "std")],  # Replace target with alogithm_b
-                    scores.loc[indexes_to_take, (target, "train", f"{metric}")].values.flatten(),
-                    scores.loc[indexes_to_take, (target, "train", f"{metric}_std")].values.flatten(),
+                    correlations_to_take[(f"{algorithm_a} vs {algorithm_b}", "std")],
+                    scores.loc[indexes_to_take_target, (target, "train", f"{metric}")].values.flatten(),
+                    scores.loc[indexes_to_take_target, (target, "train", f"{metric}_std")].values.flatten(),
                     information.loc[categories_to_take, (target, "numbers", "n_participants")].values.flatten(),
                     information.loc[categories_to_take, (target, "numbers", "n_variables")].values.flatten(),
                     information.loc[categories_to_take, (target, "age_ranges", "min")].values.flatten().astype(int),
@@ -130,9 +129,9 @@ def plot_feature_importances_correlations(
 
             fig.add_bar(
                 x=x_positions.values.flatten(),
-                y=correlations_to_take[(f"{algorithm_a} vs {target}", "correlation")],  # Replace target with alogithm_b
+                y=correlations_to_take[(f"{algorithm_a} vs {algorithm_b}", "correlation")],
                 error_y={
-                    "array": correlations_to_take[(f"{algorithm_a} vs {target}", "std")],
+                    "array": correlations_to_take[(f"{algorithm_a} vs {algorithm_b}", "std")],
                     "type": "data",
                 },
                 name=TARGETS[target],
