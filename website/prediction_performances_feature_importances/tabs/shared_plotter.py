@@ -2,7 +2,14 @@ import pandas as pd
 import numpy as np
 
 from website.utils.rename import rename, rename_index
-from website import TARGETS, MAIN_CATEGORIES, ALGORITHMS, FOLDS_FEATURE_IMPORTANCES, SCORES_FEATURE_IMPORTANCES
+from website import (
+    TARGETS,
+    MAIN_CATEGORIES,
+    ALGORITHMS,
+    FOLDS_FEATURE_IMPORTANCES,
+    SCORES_RESIDUAL,
+    TOO_MANY_CATEGORIES,
+)
 
 
 def plot_scores(
@@ -37,72 +44,49 @@ def plot_scores(
         "questionnaire": questionnaire_categories,
     }
 
-    if algorithms == ["best"]:
-        algorithms_to_look_at = list(ALGORITHMS.keys())
-        algorithms_to_look_at.remove("best")
-    else:
-        algorithms_to_look_at = algorithms
-
-    list_indexes_to_take = []
+    list_categories_to_take = []
     for main_category in MAIN_CATEGORIES:
         if categories_to_display[main_category] == ["all"]:
             categories_to_display[main_category] = (
                 pd.Index(list(CATEGORIES_IN_DATA[main_category].keys())).drop("all").to_list()
             )
-        list_indexes_to_take.extend(
-            pd.MultiIndex.from_product(
-                ([main_category], categories_to_display[main_category], algorithms_to_look_at)
-            ).to_list()
+        list_categories_to_take.extend(
+            pd.MultiIndex.from_product(([main_category], categories_to_display[main_category])).to_list()
         )
-    indexes_to_take = pd.MultiIndex.from_tuples(list_indexes_to_take, names=["main_category", "category", "algorithm"])
-    categories_to_take = indexes_to_take.droplevel("algorithm").drop_duplicates()
-    if not custom_categories and len(categories_to_take) > 70:
+    categories_to_take = pd.MultiIndex.from_tuples(list_categories_to_take, names=["main_category", "category"])
+    if not custom_categories and len(categories_to_take) > TOO_MANY_CATEGORIES:
         return (
             "Please select less categories, the time required to load the graphs is going to be too long...",
             go.Figure(),
         )
 
-    scores = pd.DataFrame(scores_data).set_index(["main_category", "category", "algorithm"])
+    scores = pd.DataFrame(scores_data).set_index(["main_category", "category"]).loc[categories_to_take]
     scores.columns = pd.MultiIndex.from_tuples(
-        list(map(eval, scores.columns.tolist())), names=["target", "fold", "metric"]
+        list(map(eval, scores.columns.tolist())), names=["target", "algorithm", "fold", "metric"]
     )
-    information = pd.DataFrame(information_data).set_index(["main_category", "category"])
+    information = pd.DataFrame(information_data).set_index(["main_category", "category"]).loc[categories_to_take]
     information.columns = pd.MultiIndex.from_tuples(
         list(map(eval, information.columns.tolist())), names=["target", "information", "detail"]
     )
 
-    indexes_target_best_algorithms = {}
-    if algorithms == ["best"]:
-        scores_grouped_by_categories = (
-            scores.loc[indexes_to_take].reset_index().groupby(by=["main_category", "category"])
-        )
-
-        for target in targets:
-            best_algorithms = list(
-                map(
-                    lambda group: group[1].set_index("algorithm")[(target, "train", metric)].idxmax(),
-                    scores_grouped_by_categories,
-                )
-            )
-            best_algorithms = pd.Series(best_algorithms).replace(np.nan, ALGORITHMS[algorithms_to_look_at[0]])
-            indexes_target_best_algorithms[target] = rename_index(
-                pd.MultiIndex.from_tuples(
-                    list(
-                        zip(
-                            information.index.get_level_values("main_category").to_list(),
-                            information.index.get_level_values("category").to_list(),
-                            best_algorithms.to_list(),
-                        )
-                    ),
-                    names=["main_category", "category", "algorithm"],
-                ),
-                custom_categories=custom_categories,
-            )
-
-    rename(scores, columns=False, custom_categories=custom_categories)
-    rename(information, algorithm=False, columns=False, custom_categories=custom_categories)
-    indexes_to_take = rename_index(indexes_to_take, custom_categories=custom_categories)
-    categories_to_take = rename_index(categories_to_take, algorithm=False, custom_categories=custom_categories)
+    rename(
+        scores,
+        index_main_category=True,
+        index_category=True,
+        columns_target=True,
+        columns_algorithm=True,
+        custom_categories=custom_categories,
+    )
+    rename(
+        information,
+        index_main_category=True,
+        index_category=True,
+        columns_target=True,
+        custom_categories=custom_categories,
+    )
+    categories_to_take = rename_index(
+        categories_to_take, main_category=True, category=True, custom_categories=custom_categories
+    )
 
     hovertemplate = "%{x},<Br> score: %{y:.3f} +- %{customdata[0]:.3f}, %{customdata[1]} participants with %{customdata[2]} variables, age range %{customdata[3]} to %{customdata[4]} years old <extra>%{customdata[5]}</extra>"
 
@@ -110,17 +94,6 @@ def plot_scores(
     titles = {}
 
     for fold in FOLDS_FEATURE_IMPORTANCES:
-        scores_fold = scores.loc[indexes_to_take, (slice(None), fold)]
-
-        if sum(scores_fold.notna().values.flatten()) == 0:
-            return f"{FOLDS_FEATURE_IMPORTANCES[fold]} has no value to show", go.Figure(), "", go.Figure()
-        if scores_fold.shape[0] > 1:
-            titles[
-                fold
-            ] = f"{FOLDS_FEATURE_IMPORTANCES[fold]}, average {SCORES_FEATURE_IMPORTANCES[targets[0]][metric]} = {pd.Series(scores_fold.loc[:, (targets, fold, metric)].values.flatten()).mean().round(3)} +- {pd.Series(scores_fold.loc[:, (targets, fold, metric)].values.flatten()).std().round(3)}"
-        else:
-            titles[fold] = FOLDS_FEATURE_IMPORTANCES[fold]
-
         x_positions = pd.Series(np.arange(5, 10 * len(categories_to_take) + 5, 10), index=categories_to_take)
 
         figures[fold] = go.Figure()
@@ -131,31 +104,51 @@ def plot_scores(
             }
         )
 
+        shown_scores = []
+
         for target in targets:
             for algorithm in algorithms:
                 if algorithm == "best":
-                    indexes = indexes_target_best_algorithms[target]
-                    algorithms_custom_data = indexes_target_best_algorithms[target].get_level_values("algorithm")
+                    best_algorithms = (
+                        scores.loc[:, (TARGETS[target], slice(None), "train", metric)]
+                        .droplevel(["target", "fold", "metric"], axis=1)
+                        .idxmax(axis=1)
+                    ).replace(np.nan, list(ALGORITHMS.values())[0])
+                    main_categories_categories_best_algorithms = best_algorithms.reset_index().apply(
+                        lambda x: tuple(x), axis=1
+                    )
+                    scores_values = (
+                        scores.loc[:, (TARGETS[target], slice(None), fold, metric)]
+                        .stack(level="algorithm", dropna=False)
+                        .loc[main_categories_categories_best_algorithms]
+                    ).values.flatten()
+                    scores_std = (
+                        scores.loc[:, (TARGETS[target], slice(None), fold, f"{metric}_std")]
+                        .stack(level="algorithm", dropna=False)
+                        .loc[main_categories_categories_best_algorithms]
+                    ).values.flatten()
+                    algorithms_custom_data = best_algorithms.values.flatten()
                 else:
-                    indexes = (slice(None), slice(None), ALGORITHMS[algorithm])
+                    scores_values = scores[(TARGETS[target], ALGORITHMS[algorithm], fold, metric)].values
+                    scores_std = scores[(TARGETS[target], ALGORITHMS[algorithm], fold, f"{metric}_std")].values
                     algorithms_custom_data = [ALGORITHMS[algorithm]] * len(categories_to_take)
 
                 customdata = np.dstack(
                     (
-                        scores_fold.loc[indexes, (target, fold, f"{metric}_std")].values.flatten(),
-                        information.loc[categories_to_take, (target, "numbers", "n_participants")].values.flatten(),
-                        information.loc[categories_to_take, (target, "numbers", "n_variables")].values.flatten(),
-                        information.loc[categories_to_take, (target, "age_ranges", "min")].values.flatten().astype(int),
-                        information.loc[categories_to_take, (target, "age_ranges", "max")].values.flatten().astype(int),
+                        scores_std.flatten(),
+                        information[(TARGETS[target], "numbers", "n_participants")].values.flatten(),
+                        information[(TARGETS[target], "numbers", "n_variables")].values.flatten(),
+                        information[(TARGETS[target], "age_ranges", "min")].values.flatten().astype(int),
+                        information[(TARGETS[target], "age_ranges", "max")].values.flatten().astype(int),
                         algorithms_custom_data,
                     )
                 )[0]
 
                 figures[fold].add_bar(
-                    x=x_positions.loc[categories_to_take].values.flatten(),
-                    y=scores_fold.loc[indexes, (target, fold, metric)],
+                    x=x_positions.values.flatten(),
+                    y=scores_values,
                     error_y={
-                        "array": scores_fold.loc[indexes, (target, fold, f"{metric}_std")],
+                        "array": scores_std,
                         "type": "data",
                     },
                     name=f"{TARGETS[target]} {ALGORITHMS[algorithm]}",
@@ -163,17 +156,26 @@ def plot_scores(
                     customdata=customdata,
                 )
 
+                shown_scores.extend(scores_values.flatten())
+
+        if pd.Series(shown_scores).notna().sum() == 0:
+            return f"{FOLDS_FEATURE_IMPORTANCES[fold]} has no value to show", go.Figure()
+
         add_custom_legend_axis(
             figures[fold],
             categories_to_take,
             -120 if metric == "rmse" else -1,
             -60 if metric == "rmse" else -0.5,
-            min(scores_fold.loc[:, (targets, fold, metric)].min().min(), 0),
+            min(pd.Series(shown_scores).min(), 0),
         )
+
+        titles[
+            fold
+        ] = f"{FOLDS_FEATURE_IMPORTANCES[fold]}, average {SCORES_RESIDUAL[targets[0]][metric]} = {pd.Series(shown_scores).mean().round(3)} +- {pd.Series(shown_scores).std().round(3)}"
 
         figures[fold].update_layout(
             yaxis={
-                "title": SCORES_FEATURE_IMPORTANCES[targets[0]][metric],
+                "title": SCORES_RESIDUAL[targets[0]][metric],
                 "showgrid": False,
                 "zeroline": False,
                 "showticklabels": True,
