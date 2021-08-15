@@ -5,8 +5,11 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 from dash.exceptions import PreventUpdate
 
+import pandas as pd
+
 from website.utils.controls import get_item_radio_items, get_check_list, get_drop_down, get_options_from_dict
-from website.utils.aws_loader import load_feather
+
+# from website.utils.aws_loader import load_feather
 from website.prediction_performances_residual.tabs.shared_plotter import plot_scores
 from website import TARGETS, MAIN_CATEGORIES, CUSTOM_CATEGORIES, ALGORITHMS, SCORES_RESIDUAL, DOWNLOAD_CONFIG
 
@@ -150,11 +153,11 @@ def get_custom_categories():
                 [
                     dcc.Store(
                         id="memory_prediction_performances_residual_custom_categories",
-                        data=load_feather(f"custom_categories/scores_residual.feather").to_dict(),
+                        data=pd.read_feather(f"data/custom_categories/scores_residual.feather").to_dict(),
                     ),
                     dcc.Store(
                         id="memory_information_prediction_performances_residual_custom_categories",
-                        data=load_feather(f"custom_categories/information.feather").to_dict(),
+                        data=pd.read_feather(f"data/custom_categories/information.feather").to_dict(),
                     ),
                 ]
             ),
