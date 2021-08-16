@@ -28,7 +28,7 @@ LAYOUT = html.Div(
                 dbc.Tab(label="All categories", tab_id="prediction_performances_residual_all_categories"),
             ],
             id="tab_manager_prediction_performances_residual",
-            active_tab="prediction_performances_residual_all_categories",
+            active_tab="prediction_performances_residual_custom_categories",
         ),
         html.Div(id="tab_content_prediction_performances_residual"),
     ]
