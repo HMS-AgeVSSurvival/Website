@@ -46,14 +46,12 @@ if __name__ == "__main__":
     #             f"data/custom_categories/correlations/residual/number_participants_{target_row}_{target_column}.feather"
     #         )
 
-    # for method in METHODS:
-    #     for feature_importances_correlations_type in ["between_targets", "between_algorithms"]:
-    #         correlations = pd.read_feather(
-    #             f"data/all_categories/correlations/feature_importances/{method}_{feature_importances_correlations_type}.feather"
-    #         ).set_index(["main_category", "category"])
-    #         custom_correlations = correlations.loc[
-    #             CUSTOM_CATEGORIES_INDEX[CUSTOM_CATEGORIES_INDEX.get_level_values("main_category") != "laboratory"]
-    #         ]
-    #         custom_correlations.reset_index().to_feather(
-    #             f"data/custom_categories/correlations/feature_importances/{method}_{feature_importances_correlations_type}.feather"
-    #         )
+    for method in METHODS:
+        for feature_importances_correlations_type in ["between_targets", "between_algorithms"]:
+            correlations = pd.read_feather(
+                f"data/all_categories/correlations/feature_importances/{method}_{feature_importances_correlations_type}.feather"
+            ).set_index(["main_category", "category"])
+            custom_correlations = correlations.loc[CUSTOM_CATEGORIES_INDEX]
+            custom_correlations.reset_index().to_feather(
+                f"data/custom_categories/correlations/feature_importances/{method}_{feature_importances_correlations_type}.feather"
+            )
