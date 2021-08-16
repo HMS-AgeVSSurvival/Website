@@ -1,12 +1,18 @@
 import pandas as pd
 import numpy as np
 
-from website.utils.rename import rename
-from website import TARGETS, MAIN_CATEGORIES, ALGORITHMS, FOLDS_FEATURE_IMPORTANCES, SCORES_FEATURE_IMPORTANCES
+from website.utils.rename import rename, rename_index
+from website import (
+    TARGETS,
+    MAIN_CATEGORIES,
+    ALGORITHMS,
+    SCORES_FEATURE_IMPORTANCES,
+    TOO_MANY_CATEGORIES,
+)
 
 
-def plot_correlations(
-    correlations_data,
+def plot_feature_importances_correlations(
+    feature_importances_correlations_data,
     scores_data,
     information_data,
     target_a,
@@ -15,7 +21,6 @@ def plot_correlations(
     laboratory_categories,
     questionnaire_categories,
     algorithms,
-    metric,
     custom_categories=True,
 ):
     import plotly.graph_objs as go
@@ -37,156 +42,232 @@ def plot_correlations(
         "questionnaire": questionnaire_categories,
     }
 
-    if algorithms == ["best"]:
-        algorithms_to_look_at = list(ALGORITHMS.keys())
-        algorithms_to_look_at.remove("best")
-    else:
-        algorithms_to_look_at = algorithms
-
-    list_indexes_to_take = []
+    list_categories_to_take = []
     for main_category in MAIN_CATEGORIES:
         if categories_to_display[main_category] == ["all"]:
             categories_to_display[main_category] = (
                 pd.Index(list(CATEGORIES_IN_DATA[main_category].keys())).drop("all").to_list()
             )
-        list_indexes_to_take.extend(
-            pd.MultiIndex.from_product(
-                ([main_category], categories_to_display[main_category], algorithms_to_look_at)
-            ).to_list()
+        list_categories_to_take.extend(
+            pd.MultiIndex.from_product(([main_category], categories_to_display[main_category])).to_list()
         )
-    indexes_to_take = pd.MultiIndex.from_tuples(list_indexes_to_take, names=["main_category", "category", "algorithm"])
-    if not custom_categories and len(indexes_to_take.droplevel("algorithm").drop_duplicates()) > 70:
+    categories_to_take = pd.MultiIndex.from_tuples(list_categories_to_take, names=["main_category", "category"])
+    if not custom_categories and len(categories_to_take) > TOO_MANY_CATEGORIES:
         return (
             "Please select less categories, the time required to load the graphs is going to be too long...",
             go.Figure(),
         )
 
-    correlations_full = pd.DataFrame(correlations_data).set_index(["main_category", "category", "algorithm"])
-    correlations_full.columns = pd.MultiIndex.from_tuples(
-        list(map(eval, correlations_full.columns.tolist())), names=["targets", "metric"]
+    correlations = (
+        pd.DataFrame(feature_importances_correlations_data)
+        .set_index(["main_category", "category"])
+        .loc[categories_to_take]
     )
-    scores_full = pd.DataFrame(scores_data).set_index(["main_category", "category", "algorithm"])
-    scores_full.columns = pd.MultiIndex.from_tuples(
-        list(map(eval, scores_full.columns.tolist())), names=["target", "fold", "metric"]
+    correlations.columns = pd.MultiIndex.from_tuples(
+        list(map(eval, correlations.columns.tolist())), names=["targets", "algorithm", "metric"]
     )
-    information_full = pd.DataFrame(information_data).set_index(["main_category", "category"])
-    information_full.columns = pd.MultiIndex.from_tuples(
-        list(map(eval, information_full.columns.tolist())), names=["target", "information", "detail"]
+    scores = pd.DataFrame(scores_data).set_index(["main_category", "category"]).loc[categories_to_take]
+    scores.columns = pd.MultiIndex.from_tuples(
+        list(map(eval, scores.columns.tolist())), names=["target", "algorithm", "fold", "metric"]
     )
-    scores = scores_full.loc[
-        indexes_to_take, (targets, list(FOLDS_FEATURE_IMPORTANCES.keys()), [metric, f"{metric}_std"])
-    ]
-    information = information_full.loc[indexes_to_take.droplevel("algorithm").drop_duplicates(), targets]
+    information = pd.DataFrame(information_data).set_index(["main_category", "category"]).loc[categories_to_take]
+    information.columns = pd.MultiIndex.from_tuples(
+        list(map(eval, information.columns.tolist())), names=["target", "information", "detail"]
+    )
 
-    rename(scores, columns=False, custom_categories=custom_categories)
-    rename(information, algorithm=False, columns=False, custom_categories=custom_categories)
+    rename(
+        correlations,
+        index_main_category=True,
+        index_category=True,
+        columns_algorithm=True,
+        custom_categories=custom_categories,
+    )
+    rename(
+        scores,
+        index_main_category=True,
+        index_category=True,
+        columns_target=True,
+        columns_algorithm=True,
+        custom_categories=custom_categories,
+    )
+    rename(
+        information,
+        index_main_category=True,
+        index_category=True,
+        columns_target=True,
+        custom_categories=custom_categories,
+    )
+    categories_to_take = rename_index(
+        categories_to_take, main_category=True, category=True, custom_categories=custom_categories
+    )
 
-    indexes_target_best_algorithms = {}
-    if algorithms == ["best"]:
-        scores_grouped_by_categories = scores.reset_index().groupby(by=["main_category", "category"])
+    if target_a == target_b:
+        hovertemplate = (
+            "%{x} <Br>Correlation %{y:.3f} +- %{customdata[0]:.3f} <Br><Br>"
+            + TARGETS[target_a]
+            + " score: %{customdata[1]:.3f} +- %{customdata[2]:.3f} <Br><Br>%{customdata[3]} participants with %{customdata[4]} variables, age range %{customdata[5]} to %{customdata[6]} years old <extra>%{customdata[7]}</extra>"
+        )
+    else:
+        hovertemplate = (
+            "%{x} <Br>Correlation %{y:.3f} +- %{customdata[0]:.3f} <Br><Br>"
+            + TARGETS[target_a]
+            + " score: %{customdata[1]:.3f} +- %{customdata[2]:.3f} <Br>%{customdata[3]} participants with %{customdata[4]} variables, age range %{customdata[5]} to %{customdata[6]} years old<Br><Br>"
+            + TARGETS[target_b]
+            + " score: %{customdata[7]:.3f} +- %{customdata[8]:.3f} <Br>%{customdata[9]} participants with %{customdata[10]} variables, age range %{customdata[11]} to %{customdata[12]} years old <extra>%{customdata[13]}</extra>"
+        )
 
-        for target in targets:
-            best_algorithms = list(
-                map(
-                    lambda group: group[1].set_index("algorithm")[(target, "test", metric)].idxmax(),
-                    scores_grouped_by_categories,
-                )
+    x_positions = pd.Series(np.arange(5, 10 * len(categories_to_take) + 5, 10), index=categories_to_take)
+
+    fig = go.Figure()
+    fig.update_layout(
+        xaxis={
+            "tickvals": np.arange(5, 10 * len(categories_to_take) + 5, 10),
+            "ticktext": [" - ".join(elem) for elem in categories_to_take],
+        }
+    )
+
+    shown_correlations = []
+
+    for algorithm in algorithms:
+        metric_a = list(SCORES_FEATURE_IMPORTANCES[target_a].keys())[0]
+        metric_b = list(SCORES_FEATURE_IMPORTANCES[target_b].keys())[0]
+
+        if algorithm == "best":
+            best_algorithms_a = (
+                scores.loc[:, (TARGETS[target_a], slice(None), "train", metric_a)]
+                .droplevel(["target", "fold", "metric"], axis=1)
+                .idxmax(axis=1)
+            ).replace(np.nan, list(ALGORITHMS.values())[0])
+            main_categories_categories_best_algorithms_a = best_algorithms_a.reset_index().apply(
+                lambda x: tuple(x), axis=1
             )
-            best_algorithms = pd.Series(best_algorithms).replace(np.nan, ALGORITHMS[algorithms_to_look_at[0]])
-            indexes_target_best_algorithms[target] = pd.MultiIndex.from_tuples(
-                list(
-                    zip(
-                        information.index.get_level_values("main_category").to_list(),
-                        information.index.get_level_values("category").to_list(),
-                        best_algorithms.to_list(),
-                    )
-                ),
-                names=["main_category", "category", "algorithm"],
-            )
 
-    if targets != ["age"]:
-        scores.replace(-1, np.nan, inplace=True)
-    hovertemplate = "%{x},<Br> score: %{y:.3f} +- %{customdata[0]:.3f}, %{customdata[1]} participants with %{customdata[2]} variables, age range %{customdata[3]} to %{customdata[4]} years old <extra>%{customdata[5]}</extra>"
+            correlations_values = (
+                correlations.loc[:, (f"{target_a} vs {target_b}", slice(None), "correlation")]
+                .stack(level="algorithm", dropna=False)
+                .loc[main_categories_categories_best_algorithms_a]
+            ).values.flatten()
+            correlations_std = (
+                correlations.loc[:, (f"{target_a} vs {target_b}", slice(None), "std")]
+                .stack(level="algorithm", dropna=False)
+                .loc[main_categories_categories_best_algorithms_a]
+            ).values.flatten()
+            scores_a_values = (
+                scores.loc[:, (TARGETS[target_a], slice(None), "train", metric_a)]
+                .stack(level="algorithm", dropna=False)
+                .loc[main_categories_categories_best_algorithms_a]
+            ).values.flatten()
+            scores_a_std = (
+                scores.loc[:, (TARGETS[target_a], slice(None), "train", f"{metric_a}_std")]
+                .stack(level="algorithm", dropna=False)
+                .loc[main_categories_categories_best_algorithms_a]
+            ).values.flatten()
+            algorithms_custom_data_a = best_algorithms_a.values.flatten()
 
-    figures = {}
-    titles = {}
-
-    for fold in FOLDS_FEATURE_IMPORTANCES:
-        scores_fold = scores.loc[:, (slice(None), fold)]
-
-        if sum(scores_fold.notna().values.flatten()) == 0:
-            return f"{FOLDS_FEATURE_IMPORTANCES[fold]} has no value to show", go.Figure(), "", go.Figure()
-        if scores_fold.shape[0] > 1:
-            titles[
-                fold
-            ] = f"{FOLDS_FEATURE_IMPORTANCES[fold]}, average {SCORES_FEATURE_IMPORTANCES[targets[0]][metric]} = {pd.Series(scores_fold.loc[:, (targets, fold, metric)].values.flatten()).mean().round(3)} +- {pd.Series(scores_fold.loc[:, (targets, fold, metric)].values.flatten()).std().round(3)}"
+            if target_a != target_b:
+                scores_b_values = (
+                    scores.loc[:, (TARGETS[target_b], slice(None), "train", metric_b)]
+                    .stack(level="algorithm", dropna=False)
+                    .loc[main_categories_categories_best_algorithms_a]
+                ).values.flatten()
+                scores_b_std = (
+                    scores.loc[:, (TARGETS[target_b], slice(None), "train", f"{metric_b}_std")]
+                    .stack(level="algorithm", dropna=False)
+                    .loc[main_categories_categories_best_algorithms_a]
+                ).values.flatten()
         else:
-            titles[fold] = FOLDS_FEATURE_IMPORTANCES[fold]
+            correlations_values = correlations[
+                (f"{target_a} vs {target_b}", ALGORITHMS[algorithm], "correlation")
+            ].values.flatten()
+            correlations_std = correlations[
+                (f"{target_a} vs {target_b}", ALGORITHMS[algorithm], "std")
+            ].values.flatten()
+            scores_a_values = scores[(TARGETS[target_a], ALGORITHMS[algorithm], "train", metric_a)].values.flatten()
+            scores_a_std = scores[
+                (TARGETS[target_a], ALGORITHMS[algorithm], "train", f"{metric_a}_std")
+            ].values.flatten()
+            algorithms_custom_data_a = [ALGORITHMS[algorithm]] * len(categories_to_take)
 
-        x_positions = pd.Series(np.arange(5, 10 * len(information.index) + 5, 10), index=information.index)
+            if target_a != target_b:
+                scores_b_values = scores[(TARGETS[target_b], ALGORITHMS[algorithm], "train", metric_b)].values.flatten()
+                scores_b_std = scores[
+                    (TARGETS[target_b], ALGORITHMS[algorithm], "train", f"{metric_b}_std")
+                ].values.flatten()
 
-        figures[fold] = go.Figure()
-        figures[fold].update_layout(
-            xaxis={
-                "tickvals": np.arange(5, 10 * len(information.index) + 5, 10),
-                "ticktext": [" - ".join(elem) for elem in information.index],
-            }
-        )
-
-        for target in targets:
-            for algorithm in algorithms:
-                if algorithm == "best":
-                    indexes = indexes_target_best_algorithms[target]
-                    algorithms_custom_data = indexes_target_best_algorithms[target].get_level_values("algorithm")
-                else:
-                    indexes = (slice(None), slice(None), ALGORITHMS[algorithm])
-                    algorithms_custom_data = [ALGORITHMS[algorithm]] * len(information.index)
-
-                customdata = np.dstack(
-                    (
-                        scores_fold.loc[indexes, (target, fold, f"{metric}_std")].values.flatten(),
-                        information[(target, "numbers", "n_participants")].values.flatten(),
-                        information[(target, "numbers", "n_variables")].values.flatten(),
-                        information[(target, "age_ranges", "min")].values.flatten().astype(int),
-                        information[(target, "age_ranges", "max")].values.flatten().astype(int),
-                        algorithms_custom_data,
-                    )
-                )[0]
-
-                figures[fold].add_bar(
-                    x=x_positions.loc[information.index].values.flatten(),
-                    y=scores_fold.loc[indexes, (target, fold, metric)],
-                    error_y={
-                        "array": scores_fold.loc[indexes, (target, fold, f"{metric}_std")],
-                        "type": "data",
-                    },
-                    name=f"{TARGETS[target]} {ALGORITHMS[algorithm]}",
-                    hovertemplate=hovertemplate,
-                    customdata=customdata,
+        if target_a == target_b:
+            customdata = np.dstack(
+                (
+                    correlations_std,
+                    scores_a_values,
+                    scores_a_std,
+                    information[(TARGETS[target_a], "numbers", "n_participants")].values.flatten(),
+                    information[(TARGETS[target_a], "numbers", "n_variables")].values.flatten(),
+                    information[(TARGETS[target_a], "age_ranges", "min")].values.flatten().astype(int),
+                    information[(TARGETS[target_a], "age_ranges", "max")].values.flatten().astype(int),
+                    algorithms_custom_data_a,
                 )
+            )[0]
+        else:
+            customdata = np.dstack(
+                (
+                    correlations_std,
+                    scores_a_values,
+                    scores_a_std,
+                    information[(TARGETS[target_a], "numbers", "n_participants")].values.flatten(),
+                    information[(TARGETS[target_a], "numbers", "n_variables")].values.flatten(),
+                    information[(TARGETS[target_a], "age_ranges", "min")].values.flatten().astype(int),
+                    information[(TARGETS[target_a], "age_ranges", "max")].values.flatten().astype(int),
+                    scores_b_values,
+                    scores_b_std,
+                    information[(TARGETS[target_b], "numbers", "n_participants")].values.flatten(),
+                    information[(TARGETS[target_b], "numbers", "n_variables")].values.flatten(),
+                    information[(TARGETS[target_b], "age_ranges", "min")].values.flatten().astype(int),
+                    information[(TARGETS[target_b], "age_ranges", "max")].values.flatten().astype(int),
+                    algorithms_custom_data_a,
+                )
+            )[0]
 
-        add_custom_legend_axis(
-            figures[fold],
-            information.index,
-            -120 if metric == "rmse" else -1,
-            -60 if metric == "rmse" else -0.5,
-            min(scores_fold.loc[:, (targets, fold, metric)].min().min(), 0),
-        )
-
-        figures[fold].update_layout(
-            yaxis={
-                "title": SCORES_FEATURE_IMPORTANCES[targets[0]][metric],
-                "showgrid": False,
-                "zeroline": False,
-                "showticklabels": True,
-                "title_font": {"size": 45},
-                "dtick": 12 if metric == "rmse" else 0.1,
-                "tickfont_size": 20,
+        fig.add_bar(
+            x=x_positions.values.flatten(),
+            y=correlations_values,
+            error_y={
+                "array": correlations_std,
+                "type": "data",
             },
-            xaxis={"showgrid": False, "zeroline": False},
-            height=800,
-            margin={"l": 0, "r": 0, "b": 0, "t": 0},
-            legend={"orientation": "h", "yanchor": "bottom", "font": {"size": 30}},
+            name=f"{ALGORITHMS[algorithm]}",
+            hovertemplate=hovertemplate,
+            customdata=customdata,
         )
 
-    return titles["train"], figures["train"]
+        shown_correlations.extend(correlations_values)
+
+    if pd.Series(shown_correlations).notna().sum() == 0:
+        return "These settings have no value to show, consider changing the targets or the categories", go.Figure()
+
+    add_custom_legend_axis(
+        fig,
+        categories_to_take,
+        -1,
+        -0.5,
+        min(pd.Series(shown_correlations).min(), 0),
+    )
+
+    title = f"Average correlation = {pd.Series(shown_correlations).mean().round(3)} +- {pd.Series(shown_correlations).std().round(3)}"
+
+    fig.update_layout(
+        yaxis={
+            "title": "Correlation",
+            "showgrid": False,
+            "zeroline": False,
+            "showticklabels": True,
+            "title_font": {"size": 45},
+            "dtick": 0.1,
+            "tickfont_size": 20,
+        },
+        xaxis={"showgrid": False, "zeroline": False},
+        height=800,
+        margin={"l": 0, "r": 0, "b": 0, "t": 0},
+        legend={"orientation": "h", "yanchor": "bottom", "font": {"size": 30}},
+    )
+
+    return title, fig

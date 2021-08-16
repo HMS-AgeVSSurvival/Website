@@ -8,15 +8,32 @@ from dash.exceptions import PreventUpdate
 import pandas as pd
 
 from website.utils.controls import get_item_radio_items, get_check_list, get_drop_down
-from website.feature_importances_correlations.between_targets.tabs.shared_plotter import plot_correlations
+from website.feature_importances_correlations.between_targets.tabs.shared_plotter import (
+    plot_feature_importances_correlations,
+)
 from website import METHODS, TARGETS, MAIN_CATEGORIES, CUSTOM_CATEGORIES, ALGORITHMS, DOWNLOAD_CONFIG
 
 
-def get_controls_target_feature_importances_correlations_between_targets_custom_categories(number):
+@APP.callback(
+    Output("memory_feature_importances_correlations_between_targets_custom_categories", "data"),
+    Input("method_feature_importances_correlations_between_targets_custom_categories", "value"),
+)
+def get_residual_correlations_custom_categories(method):
+    return pd.read_feather(
+        f"data/custom_categories/correlations/feature_importances/{method}_between_targets.feather"
+    ).to_dict()
+
+
+def get_controls_target_feature_importances_correlations_between_targets_custom_categories(letter):
+    if letter == "a":
+        legend = "Target (best algorithm corresponds to this target):"
+    else:
+        legend = "Target:"
+
     return get_item_radio_items(
-        f"target_{number}_feature_importances_correlations_between_targets_custom_categories",
+        f"target_{letter}_feature_importances_correlations_between_targets_custom_categories",
         TARGETS,
-        "Target:",
+        legend,
     )
 
 
@@ -85,27 +102,28 @@ def _update_algorithms_prediction_performances(algorithms):
         raise PreventUpdate
 
 
-# @APP.callback(
-#     [
-#         Output("title_train_prediction_performances_feature_importances_custom_categories", "children"),
-#         Output("bars_train_prediction_performances_feature_importances_custom_categories", "figure"),
-#     ],
-#     [
-#         Input("memory_prediction_performances_feature_importances_custom_categories", "data"),
-#         Input("memory_information_prediction_performances_feature_importances_custom_categories", "data"),
-#         Input("targets_prediction_performances_feature_importances_custom_categories", "value"),
-#     ]
-#     + [
-#         Input(f"{main_category}_category_prediction_performances_feature_importances_custom_categories", "value")
-#         for main_category in MAIN_CATEGORIES
-#     ]
-#     + [
-#         Input(f"algorithm_prediction_performances_feature_importances_custom_categories", "value"),
-#         Input(f"metric_prediction_performances_feature_importances_custom_categories", "value"),
-#     ],
-# )
-def _fill_bars_prediction_performances_feature_importances_custom_categories(
-    correlations_data,
+@APP.callback(
+    [
+        Output("title_feature_importances_correlations_between_targets_custom_categories", "children"),
+        Output("bars_feature_importances_correlations_between_targets_custom_categories", "figure"),
+    ],
+    [
+        Input("memory_feature_importances_correlations_between_targets_custom_categories", "data"),
+        Input("memory_scores_feature_importances_correlations_between_targets_custom_categories", "data"),
+        Input("memory_information_feature_importances_correlations_between_targets_custom_categories", "data"),
+    ]
+    + [
+        Input(f"target_{letter}_feature_importances_correlations_between_targets_custom_categories", "value")
+        for letter in ["a", "b"]
+    ]
+    + [
+        Input(f"{main_category}_category_feature_importances_correlations_between_targets_custom_categories", "value")
+        for main_category in MAIN_CATEGORIES
+    ]
+    + [Input(f"algorithm_feature_importances_correlations_between_targets_custom_categories", "value")],
+)
+def _fill_bars_feature_importances_correlations_between_targets_custom_categories(
+    feature_importances_correlations_data,
     scores_data,
     information_data,
     target_a,
@@ -114,13 +132,12 @@ def _fill_bars_prediction_performances_feature_importances_custom_categories(
     laboratory_categories,
     questionnaire_categories,
     algorithms,
-    metric,
 ):
-    if TARGETS.index(target_a) > TARGETS.index(target_b):
+    if list(TARGETS.keys()).index(target_a) > list(TARGETS.keys()).index(target_b):
         target_a, target_b = target_b, target_a
 
-    return plot_correlations(
-        correlations_data,
+    return plot_feature_importances_correlations(
+        feature_importances_correlations_data,
         scores_data,
         information_data,
         target_a,
@@ -129,7 +146,6 @@ def _fill_bars_prediction_performances_feature_importances_custom_categories(
         laboratory_categories,
         questionnaire_categories,
         algorithms,
-        metric,
         custom_categories=True,
     )
 
@@ -142,7 +158,7 @@ def get_custom_categories():
                     dcc.Store(id="memory_feature_importances_correlations_between_targets_custom_categories"),
                     dcc.Store(
                         id="memory_scores_feature_importances_correlations_between_targets_custom_categories",
-                        data=pd.read_feather("data/custom_categories/scores_residual.feather").to_dict(),
+                        data=pd.read_feather("data/custom_categories/scores_feature_importances.feather").to_dict(),
                     ),
                     dcc.Store(
                         id="memory_information_feature_importances_correlations_between_targets_custom_categories",
@@ -157,14 +173,14 @@ def get_custom_categories():
                 [
                     dbc.Col(
                         dbc.Card(
-                            get_controls_target_feature_importances_correlations_between_targets_custom_categories(1)
+                            get_controls_target_feature_importances_correlations_between_targets_custom_categories("a")
                         ),
                         width={"size": 5},
                     ),
                     dbc.Col(dbc.Row(html.H4("VS"), justify="center"), width={"size": 2}),
                     dbc.Col(
                         dbc.Card(
-                            get_controls_target_feature_importances_correlations_between_targets_custom_categories(2)
+                            get_controls_target_feature_importances_correlations_between_targets_custom_categories("b")
                         ),
                         width={"size": 5},
                     ),
@@ -186,7 +202,7 @@ def get_custom_categories():
                         [
                             html.H3(id="title_feature_importances_correlations_between_targets_custom_categories"),
                             dcc.Graph(
-                                id="heatmap_feature_importances_correlations_between_targets_custom_categories",
+                                id="bars_feature_importances_correlations_between_targets_custom_categories",
                                 config=DOWNLOAD_CONFIG,
                             ),
                         ]

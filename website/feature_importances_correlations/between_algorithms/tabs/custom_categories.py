@@ -46,7 +46,6 @@ def get_controls_feature_importances_correlations_between_algorithms_custom_cate
                 f"{MAIN_CATEGORIES[main_category]} category:",
                 multi=True,
                 clearable=True,
-                value=["all"] if main_category != "laboratory" else [],
             )
             for main_category in MAIN_CATEGORIES
         ]
@@ -120,6 +119,9 @@ def _fill_bars_feature_importances_correlations_between_algorithms_custom_catego
     algorithm_a,
     algorithm_b,
 ):
+    if list(ALGORITHMS.keys()).index(algorithm_a) > list(ALGORITHMS.keys()).index(algorithm_b):
+        algorithm_a, algorithm_b = algorithm_b, algorithm_a
+
     return plot_feature_importances_correlations(
         feature_importances_correlations_data,
         scores_data,

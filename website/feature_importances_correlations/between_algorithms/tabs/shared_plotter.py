@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 from website.utils.rename import rename, rename_index
-from website import SCORES_FEATURE_IMPORTANCES, TARGETS, MAIN_CATEGORIES, ALGORITHMS, TOO_MANY_CATEGORIES
+from website import TARGETS, MAIN_CATEGORIES, ALGORITHMS, SCORES_FEATURE_IMPORTANCES, TOO_MANY_CATEGORIES
 
 
 def plot_feature_importances_correlations(
@@ -26,9 +26,9 @@ def plot_feature_importances_correlations(
         from website import CATEGORIES as CATEGORIES_IN_DATA
 
     if len(targets) == 0:
-        return "Please select a target", go.Figure(), "", go.Figure()
+        return "Please select a target", go.Figure()
     elif len(examination_categories) + len(laboratory_categories) + len(questionnaire_categories) == 0:
-        return "Please select a category", go.Figure(), "", go.Figure()
+        return "Please select a category", go.Figure()
 
     categories_to_display = {
         "examination": examination_categories,
@@ -36,69 +36,79 @@ def plot_feature_importances_correlations(
         "questionnaire": questionnaire_categories,
     }
 
-    list_indexes_to_take = []
+    list_categories_to_take = []
     for main_category in MAIN_CATEGORIES:
         if categories_to_display[main_category] == ["all"]:
             categories_to_display[main_category] = (
                 pd.Index(list(CATEGORIES_IN_DATA[main_category].keys())).drop("all").to_list()
             )
-        list_indexes_to_take.extend(
-            pd.MultiIndex.from_product(([main_category], categories_to_display[main_category], targets)).to_list()
+        list_categories_to_take.extend(
+            pd.MultiIndex.from_product(([main_category], categories_to_display[main_category])).to_list()
         )
-    indexes_to_take = pd.MultiIndex.from_tuples(list_indexes_to_take, names=["main_category", "category", "target"])
-    categories_to_take = indexes_to_take.droplevel("target").drop_duplicates()
+    categories_to_take = pd.MultiIndex.from_tuples(list_categories_to_take, names=["main_category", "category"])
     if not custom_categories and len(categories_to_take) > TOO_MANY_CATEGORIES:
         return (
             "Please select less categories, the time required to load the graphs is going to be too long...",
             go.Figure(),
-            "",
-            go.Figure(),
         )
 
-    scores = pd.DataFrame(scores_data).set_index(["main_category", "category", "algorithm"])
-    scores.columns = pd.MultiIndex.from_tuples(
-        list(map(eval, scores.columns.tolist())), names=["target", "fold", "metric"]
+    correlations = (
+        pd.DataFrame(feature_importances_correlations_data)
+        .set_index(["main_category", "category"])
+        .loc[categories_to_take]
     )
-    information = pd.DataFrame(information_data).set_index(["main_category", "category"])
+    correlations.columns = pd.MultiIndex.from_tuples(
+        list(map(eval, correlations.columns.tolist())), names=["target", "algorithms", "metric"]
+    )
+    scores = pd.DataFrame(scores_data).set_index(["main_category", "category"]).loc[categories_to_take]
+    scores.columns = pd.MultiIndex.from_tuples(
+        list(map(eval, scores.columns.tolist())), names=["target", "algorithm", "fold", "metric"]
+    )
+    information = pd.DataFrame(information_data).set_index(["main_category", "category"]).loc[categories_to_take]
     information.columns = pd.MultiIndex.from_tuples(
         list(map(eval, information.columns.tolist())), names=["target", "information", "detail"]
     )
-    correlations = pd.DataFrame(feature_importances_correlations_data).set_index(
-        ["main_category", "category", "target"]
-    )
-    correlations.columns = pd.MultiIndex.from_tuples(
-        list(map(eval, correlations.columns.tolist())), names=["algorithm_vs_algorithm", "metric"]
-    )
 
-    rename(scores, columns=False, custom_categories=custom_categories)
-    rename(information, algorithm=False, columns=False, custom_categories=custom_categories)
-    rename(correlations, target=True, algorithm=False, columns=False, custom_categories=custom_categories)
-    indexes_to_take = rename_index(indexes_to_take, target=True, algorithm=False, custom_categories=custom_categories)
-    categories_to_take = rename_index(categories_to_take, algorithm=False, custom_categories=custom_categories)
+    rename(
+        correlations,
+        index_main_category=True,
+        index_category=True,
+        columns_target=True,
+        custom_categories=custom_categories,
+    )
+    rename(
+        scores,
+        index_main_category=True,
+        index_category=True,
+        columns_target=True,
+        columns_algorithm=True,
+        custom_categories=custom_categories,
+    )
+    rename(
+        information,
+        index_main_category=True,
+        index_category=True,
+        columns_target=True,
+        custom_categories=custom_categories,
+    )
+    categories_to_take = rename_index(
+        categories_to_take, main_category=True, category=True, custom_categories=custom_categories
+    )
 
     if algorithm_a == algorithm_b:
         hovertemplate = (
-            "%{x}<Br> correlation: %{y:.3f} +- %{customdata[0]:.3f}<Br> score of "
+            "%{x} <Br>Correlation %{y:.3f} +- %{customdata[0]:.3f} <Br><Br>"
             + ALGORITHMS[algorithm_a]
-            + ": %{customdata[1]:.3f} +- %{customdata[2]:.3f}<Br> %{customdata[3]:.3f} participants with %{customdata[4]} variables, age range %{customdata[5]} to %{customdata[6]} years old <extra>%{customdata[7]}</extra>"
+            + " score: %{customdata[1]:.3f} +- %{customdata[2]:.3f} <Br><Br>%{customdata[3]} participants with %{customdata[4]} variables, age range %{customdata[5]} to %{customdata[6]} years old <extra></extra>"
         )
     else:
         hovertemplate = (
-            "%{x}<Br> correlation: %{y:.3f} +- %{customdata[0]:.3f}<Br> score of "
+            "%{x} <Br>Correlation %{y:.3f} +- %{customdata[0]:.3f} <Br><Br>"
             + ALGORITHMS[algorithm_a]
-            + ": %{customdata[1]:.3f} +- %{customdata[2]:.3f}, score of "
+            + " score: %{customdata[1]:.3f} +- %{customdata[2]:.3f} <Br>"
             + ALGORITHMS[algorithm_b]
-            + ": %{customdata[3]:.3f} +- %{customdata[4]:.3f}<Br> %{customdata[5]:.3f} participants with %{customdata[6]} variables, age range %{customdata[7]} to %{customdata[8]} years old <extra>%{customdata[9]}</extra>"
+            + " score: %{customdata[3]:.3f} +- %{customdata[4]:.3f} <Br><Br>%{customdata[5]} participants with %{customdata[6]} variables, age range %{customdata[7]} to %{customdata[8]} years old <extra></extra>"
         )
-
-    correlations_to_take = correlations.loc[indexes_to_take, (f"{algorithm_a} vs {algorithm_b}", "correlation")]
-
-    if sum(correlations_to_take.notna().values.flatten()) == 0:
-        return f"There is no value to show", go.Figure()
-    if correlations_to_take.shape[0] > 1:
-        title = f"Average correlation = {correlations_to_take.values.flatten().mean().round(3)} +- {correlations_to_take.values.flatten().std().round(3)}"
-    else:
-        title = f"Correlation between {algorithm_a} and {algorithm_b}"
 
     x_positions = pd.Series(np.arange(5, 10 * len(categories_to_take) + 5, 10), index=categories_to_take)
 
@@ -110,46 +120,69 @@ def plot_feature_importances_correlations(
         }
     )
 
+    shown_correlations = []
+
     for target in targets:
         metric = list(SCORES_FEATURE_IMPORTANCES[target].keys())[0]
-        indexes_to_take_target = indexes_to_take[indexes_to_take.get_level_values("target") == target]
         if algorithm_a == algorithm_b:
             customdata = np.dstack(
                 (
-                    correlations_to_take[(f"{algorithm_a} vs {algorithm_b}", "std")],
-                    scores.loc[indexes_to_take_target, (target, "train", f"{metric}")].values.flatten(),
-                    scores.loc[indexes_to_take_target, (target, "train", f"{metric}_std")].values.flatten(),
-                    information.loc[categories_to_take, (target, "numbers", "n_participants")].values.flatten(),
-                    information.loc[categories_to_take, (target, "numbers", "n_variables")].values.flatten(),
-                    information.loc[categories_to_take, (target, "age_ranges", "min")].values.flatten().astype(int),
-                    information.loc[categories_to_take, (target, "age_ranges", "max")].values.flatten().astype(int),
-                    [TARGETS[target]] * len(categories_to_take),
+                    correlations[(TARGETS[target], f"{algorithm_a} vs {algorithm_b}", "std")].values.flatten(),
+                    scores[(TARGETS[target], ALGORITHMS[algorithm_a], "train", metric)].values.flatten(),
+                    scores[(TARGETS[target], ALGORITHMS[algorithm_a], "train", f"{metric}_std")].values.flatten(),
+                    information[(TARGETS[target], "numbers", "n_participants")].values.flatten(),
+                    information[(TARGETS[target], "numbers", "n_variables")].values.flatten(),
+                    information[(TARGETS[target], "age_ranges", "min")].values.flatten().astype(int),
+                    information[(TARGETS[target], "age_ranges", "max")].values.flatten().astype(int),
+                )
+            )[0]
+        else:
+            customdata = np.dstack(
+                (
+                    correlations[(TARGETS[target], f"{algorithm_a} vs {algorithm_b}", "std")].values.flatten(),
+                    scores[(TARGETS[target], ALGORITHMS[algorithm_a], "train", metric)].values.flatten(),
+                    scores[(TARGETS[target], ALGORITHMS[algorithm_a], "train", f"{metric}_std")].values.flatten(),
+                    scores[(TARGETS[target], ALGORITHMS[algorithm_b], "train", metric)].values.flatten(),
+                    scores[(TARGETS[target], ALGORITHMS[algorithm_b], "train", f"{metric}_std")].values.flatten(),
+                    information[(TARGETS[target], "numbers", "n_participants")].values.flatten(),
+                    information[(TARGETS[target], "numbers", "n_variables")].values.flatten(),
+                    information[(TARGETS[target], "age_ranges", "min")].values.flatten().astype(int),
+                    information[(TARGETS[target], "age_ranges", "max")].values.flatten().astype(int),
                 )
             )[0]
 
-            fig.add_bar(
-                x=x_positions.values.flatten(),
-                y=correlations_to_take[(f"{algorithm_a} vs {algorithm_b}", "correlation")],
-                error_y={
-                    "array": correlations_to_take[(f"{algorithm_a} vs {algorithm_b}", "std")],
-                    "type": "data",
-                },
-                name=TARGETS[target],
-                hovertemplate=hovertemplate,
-                customdata=customdata,
-            )
+        fig.add_bar(
+            x=x_positions.values.flatten(),
+            y=correlations[(TARGETS[target], f"{algorithm_a} vs {algorithm_b}", "correlation")].values.flatten(),
+            error_y={
+                "array": correlations[(TARGETS[target], f"{algorithm_a} vs {algorithm_b}", "std")].values.flatten(),
+                "type": "data",
+            },
+            name=f"{TARGETS[target]}",
+            hovertemplate=hovertemplate,
+            customdata=customdata,
+        )
+
+        shown_correlations.extend(
+            correlations[(TARGETS[target], f"{algorithm_a} vs {algorithm_b}", "correlation")].values.flatten()
+        )
+
+    if pd.Series(shown_correlations).notna().sum() == 0:
+        return "These settings have no value to show, consider changing the targets or the categories", go.Figure()
 
     add_custom_legend_axis(
         fig,
         categories_to_take,
         -1,
         -0.5,
-        min(correlations_to_take.min().min(), 0),
+        min(pd.Series(shown_correlations).min(), 0),
     )
+
+    title = f"Average correlation = {pd.Series(shown_correlations).mean().round(3)} +- {pd.Series(shown_correlations).std().round(3)}"
 
     fig.update_layout(
         yaxis={
-            "title": "Correlations",
+            "title": "Correlation",
             "showgrid": False,
             "zeroline": False,
             "showticklabels": True,
