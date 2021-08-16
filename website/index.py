@@ -12,6 +12,9 @@ import website.prediction_performances_feature_importances.page as prediction_pe
 
 import website.residual_correlations.page as residual_correlations
 
+import website.feature_importances_correlations.between_targets.page as feature_importances_correlations_between_targets
+import website.feature_importances_correlations.between_algorithms.page as feature_importances_correlations_between_algorithms
+
 
 def get_server():
     add_layout(APP)
@@ -65,6 +68,22 @@ def get_top_bar():
                             id="residual_correlations",
                         )
                     ),
+                    dbc.DropdownMenu(
+                        [
+                            dbc.DropdownMenuItem(
+                                "Between targets",
+                                href="/feature_importances_correlations/between_targets",
+                                id="feature_importances_correlations_between_targets",
+                            ),
+                            dbc.DropdownMenuItem(
+                                "Between algorithms",
+                                href="/feature_importances_correlations/between_algorithms",
+                                id="feature_importances_correlations_between_algorithms",
+                            ),
+                        ],
+                        label="Feature importances correlations",
+                        nav=True,
+                    ),
                 ],
                 fill=True,
                 pills=True,
@@ -80,7 +99,6 @@ def get_top_bar():
     )
 
 
-# THIS CALLBACK MAPS THE WEBSITE PAGE ORGANISATION TO THE CODE PAGE ORGANISATION
 @APP.callback(Output("page_content", "children"), Input("url", "pathname"))
 def _display_page(pathname):
     if "prediction_performances_residual" == pathname.split("/")[1]:
@@ -91,6 +109,12 @@ def _display_page(pathname):
 
     elif "residual_correlations" == pathname.split("/")[1]:
         layout = residual_correlations.LAYOUT
+
+    elif "feature_importances_correlations" == pathname.split("/")[1]:
+        if "between_targets" == pathname.split("/")[2]:
+            layout = feature_importances_correlations_between_targets.LAYOUT
+        elif "between_algorithms" == pathname.split("/")[2]:
+            layout = feature_importances_correlations_between_algorithms.LAYOUT
 
     elif "/" == pathname:
         layout = introduction.LAYOUT
@@ -107,11 +131,13 @@ def _display_page(pathname):
         Output("prediction_performances_residual", "active"),
         Output("prediction_performances_feature_importances", "active"),
         Output("residual_correlations", "active"),
+        Output("feature_importances_correlations_between_targets", "active"),
+        Output("feature_importances_correlations_between_algorithms", "active"),
     ],
     Input("url", "pathname"),
 )
 def _change_active_page(pathname):
-    active_pages = [False] * 4
+    active_pages = [False] * 6
 
     if "prediction_performances_residual" == pathname.split("/")[1]:
         active_pages[1] = True
@@ -121,6 +147,12 @@ def _change_active_page(pathname):
 
     elif "residual_correlations" == pathname.split("/")[1]:
         active_pages[3] = True
+
+    elif "feature_importances_correlations" == pathname.split("/")[1]:
+        if "between_targets" == pathname.split("/")[2]:
+            active_pages[4] = True
+        elif "between_algorithms" == pathname.split("/")[2]:
+            active_pages[5] = True
 
     elif "/" == pathname:
         active_pages[0] = True
