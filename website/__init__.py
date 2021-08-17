@@ -413,6 +413,8 @@ CUSTOM_CATEGORIES = {
 
 ALGORITHMS = {"elastic_net": "Elastic Net", "light_gbm": "Tree based algorithm", "best": "Best"}
 
+RANDOM_STATES = {"1": 1, "2": 2}
+
 AXES = {"row": "Row", "column": "Column"}
 AXIS_ROW, AXIS_COLUMN = list(AXES.keys())
 
