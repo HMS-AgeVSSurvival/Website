@@ -15,6 +15,10 @@ import website.residual_correlations.page as residual_correlations
 import website.feature_importances_correlations.between_targets.page as feature_importances_correlations_between_targets
 import website.feature_importances_correlations.between_algorithms.page as feature_importances_correlations_between_algorithms
 
+import website.feature_importances.page as feature_importances
+
+import website.dataset.page as dataset
+
 
 def get_server():
     add_layout(APP)
@@ -84,6 +88,22 @@ def get_top_bar():
                         label="Feature importances correlations",
                         nav=True,
                     ),
+                    dbc.NavItem(
+                        dbc.NavLink(
+                            "Feature importances",
+                            href="/feature_importances",
+                            active=False,
+                            id="feature_importances",
+                        )
+                    ),
+                    dbc.NavItem(
+                        dbc.NavLink(
+                            "Dataset",
+                            href="/dataset",
+                            active=False,
+                            id="dataset",
+                        )
+                    ),
                 ],
                 fill=True,
                 pills=True,
@@ -116,6 +136,12 @@ def _display_page(pathname):
         elif "between_algorithms" == pathname.split("/")[2]:
             layout = feature_importances_correlations_between_algorithms.LAYOUT
 
+    elif "feature_importances" == pathname.split("/")[1]:
+        layout = feature_importances.LAYOUT
+
+    elif "dataset" == pathname.split("/")[1]:
+        layout = dataset.LAYOUT
+
     elif "/" == pathname:
         layout = introduction.LAYOUT
 
@@ -133,11 +159,13 @@ def _display_page(pathname):
         Output("residual_correlations", "active"),
         Output("feature_importances_correlations_between_targets", "active"),
         Output("feature_importances_correlations_between_algorithms", "active"),
+        Output("feature_importances", "active"),
+        Output("dataset", "active"),
     ],
     Input("url", "pathname"),
 )
 def _change_active_page(pathname):
-    active_pages = [False] * 6
+    active_pages = [False] * 8
 
     if "prediction_performances_residual" == pathname.split("/")[1]:
         active_pages[1] = True
@@ -153,6 +181,12 @@ def _change_active_page(pathname):
             active_pages[4] = True
         elif "between_algorithms" == pathname.split("/")[2]:
             active_pages[5] = True
+
+    elif "feature_importances" == pathname.split("/")[1]:
+        active_pages[6] = True
+
+    elif "dataset" == pathname.split("/")[1]:
+        active_pages[7] = True
 
     elif "/" == pathname:
         active_pages[0] = True
