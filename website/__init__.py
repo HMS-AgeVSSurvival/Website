@@ -443,3 +443,7 @@ SCORES_FEATURE_IMPORTANCES = {
     "cvd": {"c_index": "C-index"},
     "cancer": {"c_index": "C-index"},
 }
+
+AGE_COLUMN = (
+    "RIDAGEEX_extended; Best age in months at date of examination for individuals under 85 years of age at screening."
+)
