@@ -5,6 +5,7 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 from dash.exceptions import PreventUpdate
 import dash
+import copy
 
 import pandas as pd
 import numpy as np
@@ -44,7 +45,7 @@ def get_residual_correlations_all_categories(examination_categories, laboratory_
 
 
 def get_controls_feature_importances():
-    categories = CATEGORIES.copy()
+    categories = copy.deepcopy(CATEGORIES)
     for main_category in MAIN_CATEGORIES:
         del categories[main_category]["all"]
 
@@ -82,9 +83,11 @@ def _update_categories_feature_importances(*args):
         return args
     else:
         main_categories_values = [[]] * len(MAIN_CATEGORIES)
-        main_categories_values[list(MAIN_CATEGORIES.keys()).index(trigger["prop_id"].split("_")[0])] = [
-            trigger["value"][-1]
-        ]
+
+        if trigger["value"] != []:
+            main_categories_values[list(MAIN_CATEGORIES.keys()).index(trigger["prop_id"].split("_")[0])] = [
+                trigger["value"][-1]
+            ]
         return main_categories_values
 
 
@@ -93,7 +96,6 @@ def _update_categories_feature_importances(*args):
     [
         Input("memory_feature_importances", "data"),
         Input("memory_scores_feature_importances", "data"),
-        Input("memory_information_feature_importances", "data"),
         Input("targets_feature_importances", "value"),
     ]
     + [Input(f"{main_category}_category_feature_importances", "value") for main_category in MAIN_CATEGORIES]
@@ -102,7 +104,6 @@ def _update_categories_feature_importances(*args):
 def _fill_bars_feature_importances(
     feature_importances_data,
     scores_data,
-    information_data,
     targets,
     examination_categories,
     laboratory_categories,
@@ -126,14 +127,12 @@ def _fill_bars_feature_importances(
         category_to_take = ("laboratory", laboratory_categories[0])
     elif len(questionnaire_categories) == 1:
         category_to_take = ("questionnaire", questionnaire_categories[0])
+    elif len(random_states) == 0:
+        return "Please select a random state", go.Figure()
 
     scores = pd.DataFrame(scores_data).set_index(["main_category", "category"]).loc[category_to_take]
     scores.index = pd.MultiIndex.from_tuples(
         list(map(eval, scores.index.tolist())), names=["target", "algorithm", "fold", "metric"]
-    )
-    information = pd.DataFrame(information_data).set_index(["main_category", "category"]).loc[category_to_take]
-    information.index = pd.MultiIndex.from_tuples(
-        list(map(eval, information.index.tolist())), names=["target", "information", "detail"]
     )
 
     title = ""
@@ -195,7 +194,9 @@ def _fill_bars_feature_importances(
                         (target, algorithm, random_state, predictors), "feature_importances"
                     ].values.flatten(),
                     error_y={
-                        "array": feature_importances.loc[(target, algorithm, random_state, predictors), "std"].values.flatten(),
+                        "array": feature_importances.loc[
+                            (target, algorithm, random_state, predictors), "std"
+                        ].values.flatten(),
                         "type": "data",
                     },
                     name=f"{TARGETS[target]} {ALGORITHMS[algorithm]} {RANDOM_STATES[str(random_state)]}",
@@ -230,10 +231,6 @@ LAYOUT = dbc.Container(
                 dcc.Store(
                     id="memory_scores_feature_importances",
                     data=pd.read_feather(f"data/all_categories/scores_feature_importances.feather").to_dict(),
-                ),
-                dcc.Store(
-                    id="memory_information_feature_importances",
-                    data=pd.read_feather(f"data/all_categories/information.feather").to_dict(),
                 ),
             ]
         ),
