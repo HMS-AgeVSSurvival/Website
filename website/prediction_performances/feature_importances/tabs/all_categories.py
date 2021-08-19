@@ -5,9 +5,8 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 from dash.exceptions import PreventUpdate
 
-import pandas as pd
-
 from website.utils.controls import get_item_radio_items, get_check_list, get_drop_down, get_options_from_dict
+from website.utils.aws_loader import load_feather
 from website.prediction_performances.feature_importances.tabs.shared_plotter import plot_scores
 from website import TARGETS, MAIN_CATEGORIES, CATEGORIES, ALGORITHMS, SCORES_FEATURE_IMPORTANCES, DOWNLOAD_CONFIG
 
@@ -155,11 +154,11 @@ def get_all_categories():
                 [
                     dcc.Store(
                         id="memory_prediction_performances_feature_importances_all_categories",
-                        data=pd.read_feather(f"data/all_categories/scores_feature_importances.feather").to_dict(),
+                        data=load_feather(f"all_categories/scores_feature_importances.feather").to_dict(),
                     ),
                     dcc.Store(
                         id="memory_information_prediction_performances_feature_importances_all_categories",
-                        data=pd.read_feather(f"data/all_categories/information.feather").to_dict(),
+                        data=load_feather(f"all_categories/information.feather").to_dict(),
                     ),
                 ]
             ),

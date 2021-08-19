@@ -4,7 +4,6 @@ import numpy as np
 
 from website.utils.rename import rename
 from website import (
-    MAIN_CATEGORIES,
     ALGORITHMS,
     SCORES_RESIDUAL,
     AXES,

@@ -9,6 +9,7 @@ import os
 import pandas as pd
 
 from website.utils.controls import get_item_radio_items, get_check_list, get_drop_down
+from website.utils.aws_loader import load_feather
 from website.residual_correlations.tabs.share_plotter import plot_heatmap
 from website import (
     METHODS,
@@ -179,7 +180,7 @@ def get_custom_categories():
                     dcc.Store(id="memory_number_participants_residual_correlations_custom_categories"),
                     dcc.Store(
                         id="memory_scores_residual_correlations_custom_categories",
-                        data=pd.read_feather("data/custom_categories/scores_residual.feather").to_dict(),
+                        data=load_feather("custom_categories/scores_residual.feather").to_dict(),
                     ),
                 ]
             ),

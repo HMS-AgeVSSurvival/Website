@@ -8,21 +8,10 @@ import dash
 import copy
 
 import pandas as pd
-import numpy as np
 
-from website.utils.controls import get_check_list, get_drop_down, get_options_from_list
-from website.utils.rename import rename, rename_index
-from website import (
-    MAX_LENGTH_CATEGORY,
-    TARGETS,
-    MAIN_CATEGORIES,
-    CATEGORIES,
-    ALGORITHMS,
-    RANDOM_STATES,
-    AGE_COLUMN,
-    SCORES_FEATURE_IMPORTANCES,
-    DOWNLOAD_CONFIG,
-)
+from website.utils.controls import get_drop_down, get_options_from_list
+from website.utils.aws_loader import load_feather
+from website import MAIN_CATEGORIES, CATEGORIES, AGE_COLUMN, DOWNLOAD_CONFIG
 
 
 @APP.callback(
@@ -42,7 +31,7 @@ def get_residual_correlations_all_categories(examination_categories, laboratory_
     else:
         raise PreventUpdate
 
-    return pd.read_feather(f"data/{main_category}/{category}.feather").to_dict()
+    return load_feather(f"{main_category}/{category}.feather").to_dict()
 
 
 def get_controls_dataset():
@@ -253,7 +242,7 @@ LAYOUT = dbc.Container(
                 dcc.Store(id="memory_dataset"),
                 dcc.Store(
                     id="memory_scores_dataset",
-                    data=pd.read_feather(f"data/all_categories/scores_residual.feather").to_dict(),
+                    data=load_feather(f"all_categories/scores_residual.feather").to_dict(),
                 ),
             ]
         ),

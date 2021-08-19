@@ -5,10 +5,10 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 from dash.exceptions import PreventUpdate
 
-import os
 import pandas as pd
 
 from website.utils.controls import get_item_radio_items, get_check_list, get_drop_down
+from website.utils.aws_loader import load_feather
 from website.feature_importances_correlations.between_algorithms.tabs.shared_plotter import (
     plot_feature_importances_correlations,
 )
@@ -144,11 +144,11 @@ def get_custom_categories():
                     dcc.Store(id="memory_feature_importances_correlations_between_algorithms_custom_categories"),
                     dcc.Store(
                         id="memory_scores_feature_importances_correlations_between_algorithms_custom_categories",
-                        data=pd.read_feather("data/custom_categories/scores_feature_importances.feather").to_dict(),
+                        data=load_feather("custom_categories/scores_feature_importances.feather").to_dict(),
                     ),
                     dcc.Store(
                         id="memory_information_feature_importances_correlations_between_algorithms_custom_categories",
-                        data=pd.read_feather("data/custom_categories/information.feather").to_dict(),
+                        data=load_feather("custom_categories/information.feather").to_dict(),
                     ),
                 ]
             ),

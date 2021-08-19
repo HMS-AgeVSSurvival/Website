@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 
 from website.utils.controls import get_check_list, get_drop_down
-from website.utils.rename import rename, rename_index
+from website.utils.aws_loader import load_feather
 from website import (
     MAX_LENGTH_CATEGORY,
     TARGETS,
@@ -41,7 +41,7 @@ def get_residual_correlations_all_categories(examination_categories, laboratory_
     else:
         raise PreventUpdate
 
-    return pd.read_feather(f"data/feature_importances/{main_category}/{category}.feather").to_dict()
+    return load_feather(f"feature_importances/{main_category}/{category}.feather").to_dict()
 
 
 def get_controls_feature_importances():
@@ -230,7 +230,7 @@ LAYOUT = dbc.Container(
                 dcc.Store(id="memory_feature_importances"),
                 dcc.Store(
                     id="memory_scores_feature_importances",
-                    data=pd.read_feather(f"data/all_categories/scores_feature_importances.feather").to_dict(),
+                    data=load_feather(f"all_categories/scores_feature_importances.feather").to_dict(),
                 ),
             ]
         ),

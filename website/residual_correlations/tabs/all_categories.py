@@ -9,6 +9,7 @@ import os
 import pandas as pd
 
 from website.utils.controls import get_item_radio_items, get_check_list, get_drop_down
+from website.utils.aws_loader import load_feather
 from website.residual_correlations.tabs.share_plotter import plot_heatmap
 from website import (
     METHODS,
@@ -42,9 +43,7 @@ def get_std_residual_correlations_all_categories(method, target_row, target_colu
 
 
 def load_correlations(method, target_row, target_column, std_path=""):
-    path_to_fetch = (
-        f"data/all_categories/correlations/residual/{method}{std_path}_{target_row}_{target_column}.feather"
-    )
+    path_to_fetch = f"data/all_categories/correlations/residual/{method}{std_path}_{target_row}_{target_column}.feather"
     if os.path.exists(path_to_fetch):
         return pd.read_feather(path_to_fetch).to_dict()
     else:
@@ -180,7 +179,7 @@ def get_all_categories():
                     dcc.Store(id="memory_number_participants_residual_correlations_all_categories"),
                     dcc.Store(
                         id="memory_scores_residual_correlations_all_categories",
-                        data=pd.read_feather("data/all_categories/scores_residual.feather").to_dict(),
+                        data=load_feather("all_categories/scores_residual.feather").to_dict(),
                     ),
                 ]
             ),
@@ -188,9 +187,7 @@ def get_all_categories():
             html.Br(),
             html.Br(),
             dbc.Row(
-                dbc.Col(
-                    dbc.Card(get_controls_residual_correlations_all_categories()), width={"size": 2, "offset": 5}
-                )
+                dbc.Col(dbc.Card(get_controls_residual_correlations_all_categories()), width={"size": 2, "offset": 5})
             ),
             html.Br(),
             html.Br(),
