@@ -14,6 +14,7 @@ def plot_scores(
     questionnaire_categories,
     algorithms,
     metric,
+    display_train_metrics=False,
     custom_categories=True,
 ):
     import plotly.graph_objs as go
@@ -25,11 +26,29 @@ def plot_scores(
         from website import CATEGORIES as CATEGORIES_IN_DATA
 
     if len(targets) == 0:
-        return "Please select a target", go.Figure(), "", go.Figure()
+        return (
+            "Please select a target",
+            go.Figure(),
+            "",
+            go.Figure(),
+            {"display": "block"} if display_train_metrics else {"display": "none"},
+        )
     elif len(examination_categories) + len(laboratory_categories) + len(questionnaire_categories) == 0:
-        return "Please select a category", go.Figure(), "", go.Figure()
+        return (
+            "Please select a category",
+            go.Figure(),
+            "",
+            go.Figure(),
+            {"display": "block"} if display_train_metrics else {"display": "none"},
+        )
     elif len(algorithms) == 0:
-        return "Please select an algorithm", go.Figure(), "", go.Figure()
+        return (
+            "Please select an algorithm",
+            go.Figure(),
+            "",
+            go.Figure(),
+            {"display": "block"} if display_train_metrics else {"display": "none"},
+        )
 
     categories_to_display = {
         "examination": examination_categories,
@@ -53,6 +72,7 @@ def plot_scores(
             go.Figure(),
             "",
             go.Figure(),
+            {"display": "block"} if display_train_metrics else {"display": "none"},
         )
 
     scores = pd.DataFrame(scores_data).set_index(["main_category", "category"]).loc[categories_to_take]
@@ -85,10 +105,15 @@ def plot_scores(
 
     hovertemplate = "%{x},<Br> score: %{y:.3f} +- %{customdata[0]:.3f}, %{customdata[1]} participants with %{customdata[2]} variables, age range %{customdata[3]} to %{customdata[4]} years old <extra>%{customdata[5]}</extra>"
 
-    figures = {}
-    titles = {}
+    if display_train_metrics:
+        fold_to_show = list(FOLDS_RESIDUAL.keys())
+    else:
+        fold_to_show = [list(FOLDS_RESIDUAL.keys())[1]]
 
-    for fold in FOLDS_RESIDUAL:
+    figures = dict(zip(list(FOLDS_RESIDUAL.keys()), [go.Figure()] * len(list(FOLDS_RESIDUAL.keys()))))
+    titles = dict(zip(list(FOLDS_RESIDUAL.keys()), [""] * len(list(FOLDS_RESIDUAL.keys()))))
+
+    for fold in fold_to_show:
         x_positions = pd.Series(np.arange(5, 10 * len(categories_to_take) + 5, 10), index=categories_to_take)
 
         figures[fold] = go.Figure()
@@ -154,7 +179,13 @@ def plot_scores(
                 shown_scores.extend(scores_values.flatten())
 
         if pd.Series(shown_scores).notna().sum() == 0:
-            return f"{FOLDS_RESIDUAL[fold]} has no value to show", go.Figure(), "", go.Figure()
+            return (
+                f"{FOLDS_RESIDUAL[fold]} has no value to show",
+                go.Figure(),
+                "",
+                go.Figure(),
+                {"display": "block"} if display_train_metrics else {"display": "none"},
+            )
 
         add_custom_legend_axis(
             figures[fold],
@@ -184,4 +215,10 @@ def plot_scores(
             legend={"orientation": "h", "yanchor": "bottom", "font": {"size": 30}},
         )
 
-    return titles["test"], figures["test"], titles["train"], figures["train"]
+    return (
+        titles["test"],
+        figures["test"],
+        titles["train"],
+        figures["train"],
+        {"display": "block"} if display_train_metrics else {"display": "none"},
+    )

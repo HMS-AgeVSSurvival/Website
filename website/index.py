@@ -7,8 +7,8 @@ from website.app import APP
 
 import website.introduction as introduction
 
-import website.prediction_performances_residual.page as prediction_performances_residual
-import website.prediction_performances_feature_importances.page as prediction_performances_feature_importances
+import website.prediction_performances.residual.page as prediction_performances_residual
+import website.prediction_performances.feature_importances.page as prediction_performances_feature_importances
 
 import website.residual_correlations.page as residual_correlations
 
@@ -33,6 +33,7 @@ def launch_local_website():
 def add_layout(app):
     app.layout = html.Div(
         [
+            html.Div(id="blank-output"),
             dcc.Location(id="url", refresh=False),
             get_top_bar(),
             html.Hr(),
@@ -48,21 +49,21 @@ def get_top_bar():
             dbc.Nav(
                 [
                     dbc.NavItem(dbc.NavLink("Introduction", href="/", active=False, id="introduction")),
-                    dbc.NavItem(
-                        dbc.NavLink(
-                            "Prediction performances (residual)",
-                            href="/prediction_performances_residual",
-                            active=False,
-                            id="prediction_performances_residual",
-                        )
-                    ),
-                    dbc.NavItem(
-                        dbc.NavLink(
-                            "Prediction performances (feature importances)",
-                            href="/prediction_performances_feature_importances",
-                            active=False,
-                            id="prediction_performances_feature_importances",
-                        )
+                    dbc.DropdownMenu(
+                        [
+                            dbc.DropdownMenuItem(
+                                "Residual",
+                                href="/prediction_performances/residual",
+                                id="prediction_performances_residual",
+                            ),
+                            dbc.DropdownMenuItem(
+                                "Feature importances (supplementary)",
+                                href="/prediction_performances/feature_importances",
+                                id="prediction_performances_feature_importances",
+                            ),
+                        ],
+                        label="Prediction performances",
+                        nav=True,
                     ),
                     dbc.NavItem(
                         dbc.NavLink(
@@ -121,11 +122,13 @@ def get_top_bar():
 
 @APP.callback(Output("page_content", "children"), Input("url", "pathname"))
 def _display_page(pathname):
-    if "prediction_performances_residual" == pathname.split("/")[1]:
-        layout = prediction_performances_residual.LAYOUT
+    layout = "404"
 
-    elif "prediction_performances_feature_importances" == pathname.split("/")[1]:
-        layout = prediction_performances_feature_importances.LAYOUT
+    if "prediction_performances" == pathname.split("/")[1]:
+        if "residual" == pathname.split("/")[2]:
+            layout = prediction_performances_residual.LAYOUT
+        elif "feature_importances" == pathname.split("/")[2]:
+            layout = prediction_performances_feature_importances.LAYOUT
 
     elif "residual_correlations" == pathname.split("/")[1]:
         layout = residual_correlations.LAYOUT
@@ -145,10 +148,39 @@ def _display_page(pathname):
     elif "/" == pathname:
         layout = introduction.LAYOUT
 
-    else:
-        layout = "404"
-
     return layout
+
+
+APP.clientside_callback(
+    """
+    function(pathname) {
+        document.title = "Page not found on Age VS Survival"
+        if ("prediction_performances" === pathname.split("/")[1]) {
+            if ("residual" === pathname.split("/")[2]) {
+                document.title = "Prediction performances - Residual"
+            } else if ("feature_importances" === pathname.split("/")[2]) {
+                document.title = "Prediction performances - Feature importances"
+            }
+        } else if ("residual_correlations" === pathname.split("/")[1]) {
+            document.title = "Residual correlations"
+        } else if ("feature_importances_correlations" === pathname.split("/")[1]) {
+            if ("between_targets" === pathname.split("/")[2]) {
+                document.title = "Feature importances correlations - Between targets"
+            } else if ("between_algorithms" === pathname.split("/")[2]) {
+                document.title = "Feature importances correlations - Between algorithms"
+            }
+        } else if ("feature_importances" === pathname.split("/")[1]) {
+            document.title = "Feature importances"
+        } else if ("dataset" === pathname.split("/")[1]) {
+            document.title = "Dataset"
+        } else if ("/" === pathname) {
+            document.title = "Age VS Survival"
+        }
+    }
+    """,
+    Output("blank-output", "children"),
+    Input("url", "pathname"),
+)
 
 
 @APP.callback(
@@ -167,11 +199,11 @@ def _display_page(pathname):
 def _change_active_page(pathname):
     active_pages = [False] * 8
 
-    if "prediction_performances_residual" == pathname.split("/")[1]:
-        active_pages[1] = True
-
-    elif "prediction_performances_feature_importances" == pathname.split("/")[1]:
-        active_pages[2] = True
+    if "prediction_performances" == pathname.split("/")[1]:
+        if "residual" == pathname.split("/")[1]:
+            active_pages[1] = True
+        elif "feature_importances" == pathname.split("/")[2]:
+            active_pages[2] = True
 
     elif "residual_correlations" == pathname.split("/")[1]:
         active_pages[3] = True

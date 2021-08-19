@@ -9,7 +9,7 @@ from dash.exceptions import PreventUpdate
 import pandas as pd
 
 from website.utils.controls import get_item_radio_items, get_check_list, get_drop_down, get_options_from_dict
-from website.prediction_performances_feature_importances.tabs.shared_plotter import plot_scores
+from website.prediction_performances.feature_importances.tabs.shared_plotter import plot_scores
 from website import TARGETS, MAIN_CATEGORIES, CUSTOM_CATEGORIES, ALGORITHMS, SCORES_FEATURE_IMPORTANCES, DOWNLOAD_CONFIG
 
 

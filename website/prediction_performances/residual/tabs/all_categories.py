@@ -5,10 +5,11 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 from dash.exceptions import PreventUpdate
 
-import pandas as pd 
+import pandas as pd
 
 from website.utils.controls import get_item_radio_items, get_check_list, get_drop_down, get_options_from_dict
-from website.prediction_performances_residual.tabs.shared_plotter import plot_scores
+
+from website.prediction_performances.residual.tabs.shared_plotter import plot_scores
 from website import TARGETS, MAIN_CATEGORIES, CATEGORIES, ALGORITHMS, SCORES_RESIDUAL, DOWNLOAD_CONFIG
 
 
@@ -33,6 +34,13 @@ def get_controls_prediction_performances_residual_all_categories():
                 SCORES_RESIDUAL[list(TARGETS.keys())[0]],
                 "Target:",
             ),
+        ]
+        + [
+            get_check_list(
+                f"display_train_bars_prediction_performances_residual_all_categories",
+                {"True": "Display train metrics"},
+                "",
+            )
         ]
     )
 
@@ -107,6 +115,7 @@ def update_algorithms_prediction_performances_residual_all_categories(algorithms
         Output("bars_test_prediction_performances_residual_all_categories", "figure"),
         Output("title_train_prediction_performances_residual_all_categories", "children"),
         Output("bars_train_prediction_performances_residual_all_categories", "figure"),
+        Output("hiden_train_metrics_prediction_performances_residual_all_categories", component_property="style"),
     ],
     [
         Input("memory_prediction_performances_residual_all_categories", "data"),
@@ -118,9 +127,10 @@ def update_algorithms_prediction_performances_residual_all_categories(algorithms
         for main_category in MAIN_CATEGORIES
     ]
     + [
-        Input(f"algorithm_prediction_performances_residual_all_categories", "value"),
-        Input(f"metric_prediction_performances_residual_all_categories", "value"),
-    ],
+        Input("algorithm_prediction_performances_residual_all_categories", "value"),
+        Input("metric_prediction_performances_residual_all_categories", "value"),
+    ]
+    + [Input("display_train_bars_prediction_performances_residual_all_categories", "value")],
 )
 def _fill_bars_prediction_performances_residual_all_categories(
     scores_data,
@@ -131,6 +141,7 @@ def _fill_bars_prediction_performances_residual_all_categories(
     questionnaire_categories,
     algorithms,
     metric,
+    display_train_metrics,
 ):
     return plot_scores(
         scores_data,
@@ -141,6 +152,7 @@ def _fill_bars_prediction_performances_residual_all_categories(
         questionnaire_categories,
         algorithms,
         metric,
+        display_train_metrics=True if len(display_train_metrics) == 1 else False,
         custom_categories=False,
     )
 
@@ -177,7 +189,8 @@ def get_all_categories():
                         [
                             html.H3(id="title_test_prediction_performances_residual_all_categories"),
                             dcc.Graph(
-                                id="bars_test_prediction_performances_residual_all_categories", config=DOWNLOAD_CONFIG
+                                id="bars_test_prediction_performances_residual_all_categories",
+                                config=DOWNLOAD_CONFIG,
                             ),
                         ]
                     )
@@ -185,16 +198,21 @@ def get_all_categories():
                 width={"offset": 2},
             ),
             dbc.Col(
-                [
-                    dcc.Loading(
-                        [
-                            html.H3(id="title_train_prediction_performances_residual_all_categories"),
-                            dcc.Graph(
-                                id="bars_train_prediction_performances_residual_all_categories", config=DOWNLOAD_CONFIG
-                            ),
-                        ]
-                    )
-                ],
+                html.Div(
+                    [
+                        dcc.Loading(
+                            [
+                                html.H3(id="title_train_prediction_performances_residual_all_categories"),
+                                dcc.Graph(
+                                    id="bars_train_prediction_performances_residual_all_categories",
+                                    config=DOWNLOAD_CONFIG,
+                                ),
+                            ]
+                        )
+                    ],
+                    id="hiden_train_metrics_prediction_performances_residual_all_categories",
+                    style={"display": "none"},
+                ),
                 width={"offset": 2},
             ),
         ],
