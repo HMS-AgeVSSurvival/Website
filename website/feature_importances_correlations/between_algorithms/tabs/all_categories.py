@@ -5,7 +5,6 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 from dash.exceptions import PreventUpdate
 
-import pandas as pd
 
 from website.utils.controls import get_item_radio_items, get_check_list, get_drop_down
 from website.utils.aws_loader import load_feather
@@ -20,8 +19,8 @@ from website import METHODS, TARGETS, MAIN_CATEGORIES, CATEGORIES, ALGORITHMS, D
     Input("method_feature_importances_correlations_between_algorithms_all_categories", "value"),
 )
 def get_residual_correlations_all_categories(method):
-    return pd.read_feather(
-        f"data/all_categories/correlations/feature_importances/{method}_between_algorithms.feather"
+    return load_feather(
+        f"all_categories/correlations/feature_importances/{method}_between_algorithms.feather"
     ).to_dict()
 
 

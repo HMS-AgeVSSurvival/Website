@@ -20,8 +20,8 @@ from website import METHODS, TARGETS, MAIN_CATEGORIES, CUSTOM_CATEGORIES, ALGORI
     Input("method_feature_importances_correlations_between_targets_custom_categories", "value"),
 )
 def get_residual_correlations_custom_categories(method):
-    return pd.read_feather(
-        f"data/custom_categories/correlations/feature_importances/{method}_between_targets.feather"
+    return load_feather(
+        f"custom_categories/correlations/feature_importances/{method}_between_targets.feather"
     ).to_dict()
 
 

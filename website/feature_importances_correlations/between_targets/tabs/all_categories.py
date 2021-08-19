@@ -20,9 +20,7 @@ from website import METHODS, TARGETS, MAIN_CATEGORIES, CATEGORIES, ALGORITHMS, D
     Input("method_feature_importances_correlations_between_targets_all_categories", "value"),
 )
 def get_residual_correlations_all_categories(method):
-    return pd.read_feather(
-        f"data/all_categories/correlations/feature_importances/{method}_between_targets.feather"
-    ).to_dict()
+    return load_feather(f"all_categories/correlations/feature_importances/{method}_between_targets.feather").to_dict()
 
 
 def get_controls_target_feature_importances_correlations_between_targets_all_categories(letter):
