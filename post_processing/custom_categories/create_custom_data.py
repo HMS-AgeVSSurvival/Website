@@ -24,6 +24,12 @@ if __name__ == "__main__":
     custom_information = information.loc[CUSTOM_CATEGORIES_INDEX]
     custom_information.reset_index().to_feather("data/custom_categories/information.feather")
 
+    log_hazard_ratio = pd.DataFrame(pd.read_feather(f"data/all_categories/log_hazard_ratio.feather")).set_index(
+        ["main_category", "category"]
+    )
+    custom_log_hazard_ratio = log_hazard_ratio.loc[CUSTOM_CATEGORIES_INDEX]
+    custom_log_hazard_ratio.reset_index().to_feather("data/custom_categories/log_hazard_ratio.feather")
+
     for idx_target_row, target_row in enumerate(TARGETS):
         for target_column in list(TARGETS.keys())[idx_target_row:]:
             for method in METHODS:

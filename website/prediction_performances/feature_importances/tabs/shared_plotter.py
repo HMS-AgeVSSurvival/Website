@@ -88,7 +88,7 @@ def plot_scores(
         categories_to_take, main_category=True, category=True, custom_categories=custom_categories
     )
 
-    hovertemplate = "%{x},<Br> score: %{y:.3f} +- %{customdata[0]:.3f}, %{customdata[1]} participants with %{customdata[2]} variables, age range %{customdata[3]} to %{customdata[4]} years old <extra>%{customdata[5]}</extra>"
+    hovertemplate = "%{x} <Br>score: %{y:.3f} +- %{customdata[0]:.3f}, %{customdata[1]} participants with %{customdata[2]} variables, age range %{customdata[3]} to %{customdata[4]} years old <extra>%{customdata[5]}</extra>"
 
     figures = {}
     titles = {}

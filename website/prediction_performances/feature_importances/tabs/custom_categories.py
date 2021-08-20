@@ -1,4 +1,3 @@
-from re import L
 from website.app import APP
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
@@ -154,11 +153,11 @@ def get_custom_categories():
                 [
                     dcc.Store(
                         id="memory_prediction_performances_feature_importances_custom_categories",
-                        data=load_feather(f"custom_categories/scores_feature_importances.feather").to_dict(),
+                        data=load_feather("custom_categories/scores_feature_importances.feather").to_dict(),
                     ),
                     dcc.Store(
                         id="memory_information_prediction_performances_feature_importances_custom_categories",
-                        data=load_feather(f"custom_categories/information.feather").to_dict(),
+                        data=load_feather("custom_categories/information.feather").to_dict(),
                     ),
                 ]
             ),

@@ -161,11 +161,11 @@ def get_custom_categories():
                 [
                     dcc.Store(
                         id="memory_prediction_performances_residual_custom_categories",
-                        data=load_feather(f"custom_categories/scores_residual.feather").to_dict(),
+                        data=load_feather("custom_categories/scores_residual.feather").to_dict(),
                     ),
                     dcc.Store(
                         id="memory_information_prediction_performances_residual_custom_categories",
-                        data=load_feather(f"custom_categories/information.feather").to_dict(),
+                        data=load_feather("custom_categories/information.feather").to_dict(),
                     ),
                 ]
             ),

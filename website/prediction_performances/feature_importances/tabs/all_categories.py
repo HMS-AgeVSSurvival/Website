@@ -154,11 +154,11 @@ def get_all_categories():
                 [
                     dcc.Store(
                         id="memory_prediction_performances_feature_importances_all_categories",
-                        data=load_feather(f"all_categories/scores_feature_importances.feather").to_dict(),
+                        data=load_feather("all_categories/scores_feature_importances.feather").to_dict(),
                     ),
                     dcc.Store(
                         id="memory_information_prediction_performances_feature_importances_all_categories",
-                        data=load_feather(f"all_categories/information.feather").to_dict(),
+                        data=load_feather("all_categories/information.feather").to_dict(),
                     ),
                 ]
             ),

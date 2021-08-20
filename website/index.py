@@ -17,6 +17,8 @@ import website.feature_importances_correlations.between_algorithms.page as featu
 
 import website.feature_importances.page as feature_importances
 
+import website.age_residuals_in_survival.page as age_residuals_in_survival
+
 import website.dataset.page as dataset
 
 
@@ -99,6 +101,14 @@ def get_top_bar():
                     ),
                     dbc.NavItem(
                         dbc.NavLink(
+                            "Age residuals in survival",
+                            href="/age_residuals_in_survival",
+                            active=False,
+                            id="age_residuals_in_survival",
+                        )
+                    ),
+                    dbc.NavItem(
+                        dbc.NavLink(
                             "Dataset",
                             href="/dataset",
                             active=False,
@@ -142,6 +152,9 @@ def _display_page(pathname):
     elif "feature_importances" == pathname.split("/")[1]:
         layout = feature_importances.LAYOUT
 
+    elif "age_residuals_in_survival" == pathname.split("/")[1]:
+        layout = age_residuals_in_survival.LAYOUT
+
     elif "dataset" == pathname.split("/")[1]:
         layout = dataset.LAYOUT
 
@@ -171,6 +184,8 @@ APP.clientside_callback(
             }
         } else if ("feature_importances" === pathname.split("/")[1]) {
             document.title = "Feature importances"
+        } else if ("age_residuals_in_survival" === pathname.split("/")[1]) {
+            document.title = "Age residuals in survival"
         } else if ("dataset" === pathname.split("/")[1]) {
             document.title = "Dataset"
         } else if ("/" === pathname) {
@@ -192,12 +207,13 @@ APP.clientside_callback(
         Output("feature_importances_correlations_between_targets", "active"),
         Output("feature_importances_correlations_between_algorithms", "active"),
         Output("feature_importances", "active"),
+        Output("age_residuals_in_survival", "active"),
         Output("dataset", "active"),
     ],
     Input("url", "pathname"),
 )
 def _change_active_page(pathname):
-    active_pages = [False] * 8
+    active_pages = [False] * 9
 
     if "prediction_performances" == pathname.split("/")[1]:
         if "residual" == pathname.split("/")[1]:
@@ -217,8 +233,11 @@ def _change_active_page(pathname):
     elif "feature_importances" == pathname.split("/")[1]:
         active_pages[6] = True
 
-    elif "dataset" == pathname.split("/")[1]:
+    elif "age_residuals_in_survival" == pathname.split("/")[1]:
         active_pages[7] = True
+
+    elif "dataset" == pathname.split("/")[1]:
+        active_pages[8] = True
 
     elif "/" == pathname:
         active_pages[0] = True

@@ -32,3 +32,6 @@ SCORES = {
     "cvd": SCORES_SURVIVAL,
     "cancer": SCORES_SURVIVAL,
 }
+
+
+LOG_HAZARD_RATIO_METRIC = {"log_hazard_ratio": "log hazard ratio", "p_value": "p-value", "std": "std"}
