@@ -1,7 +1,7 @@
 # Welcome to the repository of the [Website](https://prod---website-vbip4gqz2q-uc.a.run.app) that shows the paper's results
 
-[![Website](https://img.shields.io/website?up_color=green&url=https%3A%2F%2Fprod---website-vbip4gqz2q-uc.a.run.app%2F)](https://multidimensionality-of-aging.net/)
-[![Super linter](https://github.com/HMS-Internship/Website/actions/workflows/linter.yml/badge.svg)](https://github.com/Deep-Learning-and-Aging/Website/actions/workflows/linter.yml)
+[![Website](https://img.shields.io/website?up_color=green&url=https%3A%2F%2Fprod---website-vbip4gqz2q-uc.a.run.app%2F)](https://prod---website-vbip4gqz2q-uc.a.run.app/)
+[![Super linter](https://github.com/HMS-Internship/Website/actions/workflows/linter.yml/badge.svg)](https://github.com/HMS-Internship/Website/actions/workflows/linter.yml)
 
 The website is coded in Python, using the framework Dash. The data is stored on AWS s3. We use Cloud Run from Google Cloud Platform to host our website.
 
