@@ -158,4 +158,9 @@ Under the folder __data__, the files that can be updated are the following:
 To generate the other files, all the scripts under the folder __data__ has to be executed.
 The file [select_categories.py](./post_processing/custom_categories/select_categories.py) outputs the 30 best models. This list has to match with the list called *CUSTOM_CATEGORIES_INDEX* in the [website code](./website/__init__.py).
 
-Once everything is done, don't forget to push the new \_\_init__.py file to GitHub, to push the new data the AWS so that you can use the CI / CD pipeline.
+Once everything is done, don't forget to push the new \_\_init__.py file to GitHub, to push the new data the AWS s3 so that you can use the CI / CD pipeline.
+
+To sync the __data__ folder to AWS s3, you can use the following:
+```bash
+aws s3 sync data/ age-vs-survival/ --delete
+```
