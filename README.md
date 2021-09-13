@@ -144,3 +144,16 @@ Feel free to discuss about you ideas in the [discussion section](https://github.
 ## How to deploy
 
 A CI / CD workflow has been created with Git Actions in order to deploy the website automatically on demand. You can find the development version of the website [here](https://dev---website-vbip4gqz2q-uc.a.run.app/).
+
+## How to update the data
+
+Under the folder __data__, the files that can be updated are the following:
+- Results.xlsx
+- correlations/feature_importances/correlation_type_main_category.feather
+- correlations/feature_importances/correlation_type_std_main_category.feather
+- correlations/residual/number_participants_type_of_death_type_of_death.feather
+- correlations/residual/correlation_type_type_of_death_type_of_death.feather
+- main_category/category.feather
+
+To generate the other files, all the scripts under the folder __data__ has to be executed.
+The file [select_categories.py](./data/custom_categories/) select_categories.py) outputs the 30 best models. This list has to match with the list called *CUSTOM_CATEGORIES_INDEX* in the [website code](./website/__init__.py).
