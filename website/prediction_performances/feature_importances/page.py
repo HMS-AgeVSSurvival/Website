@@ -3,8 +3,8 @@ import dash_bootstrap_components as dbc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 
-from website.prediction_performances_feature_importances.tabs.all_categories import get_all_categories
-from website.prediction_performances_feature_importances.tabs.custom_categories import get_custom_categories
+from website.prediction_performances.feature_importances.tabs.all_categories import get_all_categories
+from website.prediction_performances.feature_importances.tabs.custom_categories import get_custom_categories
 
 
 @APP.callback(

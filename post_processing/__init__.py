@@ -13,6 +13,18 @@ RENAME_TARGETS_FEATURE_IMPORTANCES = {
     "cancer": "Survival cancer feature importances",
 }
 
+TARGETS = list(RENAME_TARGETS_FEATURE_IMPORTANCES.keys())
+TARGETS_TARGETS = [
+    f"{target_1} vs {target_2}" for idx_target, target_1 in enumerate(TARGETS) for target_2 in TARGETS[idx_target:]
+]
+
+ALGORITHMS = ["elastic_net", "light_gbm"]
+ALGORITHMS_ALGORITHMS = [
+    f"{algorithm_1} vs {algorithm_2}"
+    for idx_algorithm, algorithm_1 in enumerate(ALGORITHMS)
+    for algorithm_2 in ALGORITHMS[idx_algorithm:]
+]
+
 SCORES_SURVIVAL = {"c_index": "C-index", "diff_c_index": "Difference C-index"}
 SCORES = {
     "age": {"r2": "r²", "rmse": "RMSE"},
@@ -20,3 +32,6 @@ SCORES = {
     "cvd": SCORES_SURVIVAL,
     "cancer": SCORES_SURVIVAL,
 }
+
+
+LOG_HAZARD_RATIO_METRIC = {"log_hazard_ratio": "log hazard ratio", "p_value": "p-value", "std": "std"}

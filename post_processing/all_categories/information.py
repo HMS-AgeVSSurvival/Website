@@ -2,7 +2,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from website import TARGETS, MAIN_CATEGORIES, ALGORITHMS
-from post_processing import RANDOM_STATES, RENAME_TARGETS
+from post_processing import RANDOM_STATES, RENAME_TARGETS_RESIDUAL
 
 
 LIST_ALGORITHMS = list(ALGORITHMS.keys())
@@ -23,7 +23,7 @@ if __name__ == "__main__":
         )
 
         for target in TARGETS:
-            name_target = RENAME_TARGETS[target]
+            name_target = RENAME_TARGETS_RESIDUAL[target]
 
             new_information[(target, "numbers", "n_participants")] = results_0[
                 (name_target, "Shape after preprocessing", "n_participants")

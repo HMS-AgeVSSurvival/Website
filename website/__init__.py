@@ -4,36 +4,36 @@ import pandas as pd
 
 CUSTOM_CATEGORIES_INDEX = pd.MultiIndex.from_tuples(
     [
+        ("examination", "Audiometry"),
         ("examination", "Blood__Pressure"),
         ("examination", "Body__Measures"),
-        ("examination", "Cardiovascular__Fitness"),
         ("examination", "Dual__Energy__X-ray__Absorptiometry__-__Android_or_Gynoid"),
         ("examination", "Dual__Energy__X-ray__Absorptiometry__-__Femur"),
         ("examination", "Lower__Extremity__Disease__-__Ankle__Brachial__Blood__Pressure__Index"),
+        ("examination", "Muscle__Strength__-__Grip__Test"),
         ("examination", "Oral__Health"),
         ("examination", "Oral__Health__-__Addendum"),
         ("examination", "Oral__Health__-__Dentition"),
         ("examination", "Spirometry__-__Pre__and__Post-Bronchodilator"),
-        ("laboratory", "Autoantibodies__-__Immunofluorescence__&__Immunoprecipitation__Analyses__(Surplus)"),
-        ("laboratory", "C-Reactive__Protein__(CRP)"),
+        ("examination", "Vision"),
+        ("laboratory", "Cadmium,__Lead,__Mercury,__Cotinine__&__Nutritional__Biochemistries"),
         ("laboratory", "Complete__Blood__Count__with__5-part__Differential__-__Whole__Blood"),
+        ("laboratory", "Cystatin__C__(Surplus)"),
+        ("laboratory", "Fatty__Acids__-__Serum"),
         ("laboratory", "Glycohemoglobin"),
-        ("laboratory", "Hepatitis__A__Antibody"),
-        ("laboratory", "Hepatitis__B:__Core__Antibody,__Surface__Antigen;__Hepatitis__D__Antibody"),
-        ("laboratory", "Hepatitis__E__:__IgG__&__IgM__Antibodies"),
-        ("laboratory", "Herpes__Simplex__Virus__Type-1__&__Type-2"),
         ("laboratory", "Non-dioxin-like__Polychlorinated__Biphenyls"),
-        ("laboratory", "Pesticides__-__Organochlorine__Metabolites__-__Serum__(Surplus)"),
+        ("laboratory", "Plasma__Fasting__Glucose,__Serum__C-peptide__&__Insulin"),
         ("laboratory", "Standard__Biochemistry__Profile"),
-        ("laboratory", "Tuberculosis__-__Quantiferon_In_Gold"),
+        ("laboratory", "Trans__Fatty__Acids"),
+        ("laboratory", "Vitamin__A,__Vitamin__E__&__Carotenoids"),
+        ("questionnaire", "Blood__Pressure__&__Cholesterol"),
         ("questionnaire", "Current__Health__Status"),
-        ("questionnaire", "Disability"),
+        ("questionnaire", "Hospital__Utilization__&__Access__to__Care"),
         ("questionnaire", "Housing__Characteristics"),
         ("questionnaire", "Immunization"),
-        ("questionnaire", "Medical__Conditions"),
-        ("questionnaire", "Occupation"),
-        ("questionnaire", "Pesticide__Use"),
+        ("questionnaire", "Physical__Functioning"),
         ("questionnaire", "Smoking__-__Recent__Tobacco__Use"),
+        ("questionnaire", "Vision"),
     ],
     names=["main_category", "category"],
 )
@@ -413,6 +413,8 @@ CUSTOM_CATEGORIES = {
 
 ALGORITHMS = {"elastic_net": "Elastic Net", "light_gbm": "Tree based algorithm", "best": "Best"}
 
+RANDOM_STATES = {"1": 1, "2": 2}
+
 AXES = {"row": "Row", "column": "Column"}
 AXIS_ROW, AXIS_COLUMN = list(AXES.keys())
 
@@ -441,3 +443,7 @@ SCORES_FEATURE_IMPORTANCES = {
     "cvd": {"c_index": "C-index"},
     "cancer": {"c_index": "C-index"},
 }
+
+AGE_COLUMN = (
+    "RIDAGEEX_extended; Best age in months at date of examination for individuals under 85 years of age at screening."
+)
