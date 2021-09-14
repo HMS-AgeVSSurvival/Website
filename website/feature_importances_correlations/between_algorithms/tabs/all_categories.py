@@ -19,9 +19,7 @@ from website import METHODS, TARGETS, MAIN_CATEGORIES, CATEGORIES, ALGORITHMS, D
     Input("method_feature_importances_correlations_between_algorithms_all_categories", "value"),
 )
 def get_residual_correlations_all_categories(method):
-    return load_feather(
-        f"all_categories/correlations/feature_importances/{method}_between_algorithms.feather"
-    ).to_dict()
+    return load_feather(f"all_categories/correlation/feature_importances/{method}_between_algorithms.feather").to_dict()
 
 
 def get_controls_feature_importances_correlations_between_algorithms_all_categories():

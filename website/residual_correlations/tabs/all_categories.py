@@ -42,12 +42,12 @@ def get_std_residual_correlations_all_categories(method, target_row, target_colu
 
 
 def load_correlations(method, target_row, target_column, std_path=""):
-    path_to_fetch = f"all_categories/correlations/residual/{method}{std_path}_{target_row}_{target_column}.feather"
+    path_to_fetch = f"all_categories/correlation/residual/{method}{std_path}_{target_row}_{target_column}.feather"
     if does_key_exists(path_to_fetch):
         return load_feather(path_to_fetch).to_dict()
     else:
         correlations = load_feather(
-            f"all_categories/correlations/residual/{method}{std_path}_{target_column}_{target_row}.feather"
+            f"all_categories/correlation/residual/{method}{std_path}_{target_column}_{target_row}.feather"
         ).set_index(["main_category", "category", "algorithm"])
         correlations.columns = pd.MultiIndex.from_tuples(
             list(map(eval, correlations.columns.tolist())), names=["main_category", "category", "algorithm"]
@@ -63,12 +63,12 @@ def load_correlations(method, target_row, target_column, std_path=""):
     [Input(f"target_{key_axis}_residual_correlations_all_categories", "value") for key_axis in AXES],
 )
 def get_number_partitipants_residual_correlations_all_categories(target_row, target_column):
-    path_to_fetch = f"all_categories/correlations/residual/number_participants_{target_row}_{target_column}.feather"
+    path_to_fetch = f"all_categories/correlation/residual/number_participants_{target_row}_{target_column}.feather"
     if does_key_exists(path_to_fetch):
         return load_feather(path_to_fetch).to_dict()
     else:
         number_participants = load_feather(
-            f"all_categories/correlations/residual/number_participants_{target_column}_{target_row}.feather"
+            f"all_categories/correlation/residual/number_participants_{target_column}_{target_row}.feather"
         ).set_index(["main_category", "category"])
         number_participants.columns = pd.MultiIndex.from_tuples(
             list(map(eval, number_participants.columns.tolist())), names=["main_category", "category"]

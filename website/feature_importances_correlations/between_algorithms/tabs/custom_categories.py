@@ -21,7 +21,7 @@ from website import METHODS, TARGETS, MAIN_CATEGORIES, CUSTOM_CATEGORIES, ALGORI
 )
 def get_residual_correlations_custom_categories(method):
     return load_feather(
-        f"custom_categories/correlations/feature_importances/{method}_between_algorithms.feather"
+        f"custom_categories/correlation/feature_importances/{method}_between_algorithms.feather"
     ).to_dict()
 
 

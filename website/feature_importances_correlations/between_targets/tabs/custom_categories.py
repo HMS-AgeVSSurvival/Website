@@ -20,9 +20,7 @@ from website import METHODS, TARGETS, MAIN_CATEGORIES, CUSTOM_CATEGORIES, ALGORI
     Input("method_feature_importances_correlations_between_targets_custom_categories", "value"),
 )
 def get_residual_correlations_custom_categories(method):
-    return load_feather(
-        f"custom_categories/correlations/feature_importances/{method}_between_targets.feather"
-    ).to_dict()
+    return load_feather(f"custom_categories/correlation/feature_importances/{method}_between_targets.feather").to_dict()
 
 
 def get_controls_target_feature_importances_correlations_between_targets_custom_categories(letter):
