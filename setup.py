@@ -13,6 +13,7 @@ setup(
         "dash_html_components==1.1.4",
         "dash-gif-component==1.1.0",
         "dash_table==4.12.0",
+        "dash-auth==1.4.1",
         "dash==1.21.0",
         "sklearn==0.0",
         "numpy==1.21.1",
