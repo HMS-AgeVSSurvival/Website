@@ -155,12 +155,24 @@ Under the folder __data__, the files that can be updated are the following:
 - correlations/residual/correlation_type_type_of_death_type_of_death.feather
 - main_category/category.feather
 
-To generate the other files, all the scripts under the folder __data__ has to be executed.
-The file [select_categories.py](./post_processing/custom_categories/select_categories.py) outputs the 30 best models. This list has to match with the list called *CUSTOM_CATEGORIES_INDEX* in the [website code](./website/__init__.py).
+To generate the other files, all the scripts under the folder __data__ has to be executed. For that, execute:
+```bash
+./post_processing/update_all_categories.sh
+```
+
+Then, the file [select_categories.py](./post_processing/custom_categories/select_categories.py) outputs the 30 best models: 
+```bash
+python ./post_processing/custom_categories/select_categories.py
+```
+
+This list has to match with the list called *CUSTOM_CATEGORIES_INDEX* in the [website code](./website/__init__.py). Once updated, you can execute a last script that prunes the files generated for all the categories:
+```bash
+python ./post_processing/custom_categories/create_custom_data.py
+```
 
 Once everything is done, don't forget to push the new \_\_init__.py file to GitHub, to push the new data the AWS s3 so that you can use the CI / CD pipeline.
 
 To sync the __data__ folder to AWS s3, you can use the following:
 ```bash
-aws s3 sync data/ age-vs-survival/ --delete
+aws s3 sync data/ s3://age-vs-survival/ --delete --exclude "*.zip"
 ```
