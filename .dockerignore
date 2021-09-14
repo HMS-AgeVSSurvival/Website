@@ -11,5 +11,4 @@ Dockerfile
 LICENSE
 
 # Local specific
-/data
 /post_processing
