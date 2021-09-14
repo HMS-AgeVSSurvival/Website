@@ -31,5 +31,7 @@ if __name__ == "__main__":
     rank_scores["age"] *= 3
 
     ranked_categories = rank_scores.sum(axis=1).sort_values().index
+    print("Updated list:")
     print(sorted(ranked_categories.values[:CATEGORIES_TO_SELECT]))
-    print(scores.loc[ranked_categories[CATEGORIES_TO_SELECT]].to_frame().T)
+    print("\nBest model not taken")
+    print(scores.loc[ranked_categories[CATEGORIES_TO_SELECT]].to_frame())

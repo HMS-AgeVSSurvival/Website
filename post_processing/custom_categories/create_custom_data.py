@@ -34,7 +34,7 @@ if __name__ == "__main__":
         for target_column in list(TARGETS.keys())[idx_target_row:]:
             for method in METHODS:
                 for std_path in ["", "_std"]:
-                    path_correlations = f"data/all_categories/correlations/residual/{method}{std_path}_{target_row}_{target_column}.feather"
+                    path_correlations = f"data/all_categories/correlation/residual/{method}{std_path}_{target_row}_{target_column}.feather"
 
                     correlations = pd.read_feather(path_correlations).set_index(
                         ["main_category", "category", "algorithm"]
@@ -54,11 +54,11 @@ if __name__ == "__main__":
                     ]
                     custom_correlations.columns = map(str, custom_correlations.columns.tolist())
                     custom_correlations.reset_index().to_feather(
-                        f"data/custom_categories/correlations/residual/{method}{std_path}_{target_row}_{target_column}.feather"
+                        f"data/custom_categories/correlation/residual/{method}{std_path}_{target_row}_{target_column}.feather"
                     )
 
             path_number_participants = (
-                f"data/all_categories/correlations/residual/number_participants_{target_row}_{target_column}.feather"
+                f"data/all_categories/correlation/residual/number_participants_{target_row}_{target_column}.feather"
             )
 
             number_participants = pd.read_feather(path_number_participants).set_index(["main_category", "category"])
@@ -68,15 +68,15 @@ if __name__ == "__main__":
             custom_number_participants = number_participants.loc[CUSTOM_CATEGORIES_INDEX, CUSTOM_CATEGORIES_INDEX]
             custom_number_participants.columns = map(str, custom_number_participants.columns.tolist())
             custom_number_participants.reset_index().to_feather(
-                f"data/custom_categories/correlations/residual/number_participants_{target_row}_{target_column}.feather"
+                f"data/custom_categories/correlation/residual/number_participants_{target_row}_{target_column}.feather"
             )
 
     for method in METHODS:
         for feature_importances_correlations_type in ["between_targets", "between_algorithms"]:
             correlations = pd.read_feather(
-                f"data/all_categories/correlations/feature_importances/{method}_{feature_importances_correlations_type}.feather"
+                f"data/all_categories/correlation/feature_importances/{method}_{feature_importances_correlations_type}.feather"
             ).set_index(["main_category", "category"])
             custom_correlations = correlations.loc[CUSTOM_CATEGORIES_INDEX]
             custom_correlations.reset_index().to_feather(
-                f"data/custom_categories/correlations/feature_importances/{method}_{feature_importances_correlations_type}.feather"
+                f"data/custom_categories/correlation/feature_importances/{method}_{feature_importances_correlations_type}.feather"
             )

@@ -12,14 +12,14 @@ if __name__ == "__main__":
 
         for main_category in MAIN_CATEGORIES:
             correlations = pd.read_feather(
-                f"data/all_categories/correlations/feature_importances/{method}_{main_category}.feather"
+                f"data/all_categories/correlation/feature_importances/{method}_{main_category}.feather"
             ).set_index("category")
             correlations.columns = pd.MultiIndex.from_tuples(
                 list(map(eval, correlations.columns.tolist())), names=["target", "algorithm"]
             )
 
             correlations_std = pd.read_feather(
-                f"data/all_categories/correlations/feature_importances/{method}_std_{main_category}.feather"
+                f"data/all_categories/correlation/feature_importances/{method}_std_{main_category}.feather"
             ).set_index("category")
             correlations_std.columns = pd.MultiIndex.from_tuples(
                 list(map(eval, correlations_std.columns.tolist())), names=["target", "algorithm"]
@@ -94,7 +94,7 @@ if __name__ == "__main__":
             str, merged_new_correlations_between_targets.columns.tolist()
         )
         merged_new_correlations_between_targets.reset_index().to_feather(
-            f"data/all_categories/correlations/feature_importances/{method}_between_targets.feather"
+            f"data/all_categories/correlation/feature_importances/{method}_between_targets.feather"
         )
 
         merged_new_correlations_between_algorithms = pd.concat(
@@ -106,5 +106,5 @@ if __name__ == "__main__":
             str, merged_new_correlations_between_algorithms.columns.tolist()
         )
         merged_new_correlations_between_algorithms.reset_index().to_feather(
-            f"data/all_categories/correlations/feature_importances/{method}_between_algorithms.feather"
+            f"data/all_categories/correlation/feature_importances/{method}_between_algorithms.feather"
         )
